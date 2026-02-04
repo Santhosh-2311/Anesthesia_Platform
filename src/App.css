@@ -1,0 +1,101 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+.lm-row {
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+/* Each metric row = chart + current value beside it */
+.lm-row {
+  display: grid;
+  grid-template-columns: 1fr 160px; /* left chart, right value */
+  gap: 16px;
+  align-items: start;              /* keeps value aligned with top of chart */
+  margin-bottom: 18px;
+}
+
+/* Chart container */
+.lm-chartCard {
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+/* Value card stays beside chart */
+.lm-valueCard {
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 12px;
+  padding: 14px;
+  min-height: 160px;              /* same as chart height block */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;        /* vertically center the value */
+  align-items: center;
+  text-align: center;
+}
+
+/* Typography */
+.lm-valueLabel {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.lm-valueBig {
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.lm-valueUnit {
+  font-size: 14px;
+  color: #666;
+  margin-top: 6px;
+}
+
+
