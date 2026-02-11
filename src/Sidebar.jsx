@@ -1,38 +1,14 @@
-function Sidebar({ active, role, onNavigate }) {
+import { NavLink } from "react-router-dom"
+
+export default function Sidebar() {
+  const linkClass = ({ isActive }) =>
+    `sidebar-item ${isActive ? "active" : ""}`
+
   return (
     <div className="sidebar">
-      <div
-        className={`sidebar-item ${active === "dashboard" ? "active" : ""}`}
-        onClick={() => onNavigate("dashboard")}
-      >
-        Dashboard
-      </div>
-
-      <div
-        className={`sidebar-item ${active === "live" ? "active" : ""}`}
-        onClick={() => onNavigate("live")}
-      >
-        Live Monitoring
-      </div>
-
-      <div
-        className={`sidebar-item ${active === "devices" ? "active" : ""}`}
-        onClick={() => onNavigate("devices")}
-      >
-        Devices
-      </div>
-
-      {/* ADMIN ONLY */}
-      {role === "ADMIN" && (
-        <div
-          className={`sidebar-item ${active === "analytics" ? "active" : ""}`}
-          onClick={() => onNavigate("analytics")}
-        >
-          Analytics
-        </div>
-      )}
+      <NavLink to="/groups" className={linkClass}>
+        Device Groups
+      </NavLink>
     </div>
   )
 }
-
-export default Sidebar

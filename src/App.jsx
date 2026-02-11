@@ -1,170 +1,208 @@
-import { useState, useEffect } from "react"
-import Login from "./Login"
-import Dashboard from "./Dashboard"
-import Analytics from "./Analytics"
+import { Navigate, Route, Routes, Link, useParams } from "react-router-dom"
 import Sidebar from "./Sidebar"
 import TopBar from "./TopBar"
-import LiveMonitoring from "./LiveMonitoring"
-import { adaptTelemetry } from "./telemetryAdapter"
+import Login from "./Login"
+import LiveTelemetryWrapper from "./LiveTelemetryWrapper"
 
-function App() {
-  const [telemetry, setTelemetry] = useState([])
-  const [latest, setLatest] = useState(null)
-  const [user, setUser] = useState(null)
-  const [activePage, setActivePage] = useState("dashboard")
-
-  // ✅ NEW: stale/offline tracking
-  const [lastNewSampleAt, setLastNewSampleAt] = useState(null)
-  const [streamStatus, setStreamStatus] = useState("OFFLINE") // LIVE | STALE | OFFLINE
-
-  useEffect(() => {
-    if (!user) return
-
-    let alive = true
-    let timeoutId = null
-    let inFlight = false
-    let backoffMs = 1000
-    const controller = new AbortController()
-
-    const poll = async () => {
-      if (!alive || inFlight) return
-      inFlight = true
-
-      try {
-        const url =
-          "https://tdeoo8mxk3.execute-api.ap-south-1.amazonaws.com/latest" +
-          "?ts=" +
-          Date.now()
-
-        const res = await fetch(url, {
-          signal: controller.signal,
-          cache: "no-store"
-        })
-
-        if (!res.ok) {
-          if (res.status === 503 || res.status === 429) {
-            backoffMs = Math.min(backoffMs * 2, 15000)
-          } else {
-            backoffMs = Math.min(backoffMs + 1000, 15000)
-          }
-          return
-        }
-
-        const json = await res.json()
-        console.log("RAW JSON (full response):", json)
-
-        const points = Array.isArray(json?.points) ? json.points : []
-        if (!points.length) return
-
-        setTelemetry((prev) => {
-          const lastPrevMs =
-            prev.length
-              ? (prev[prev.length - 1].received_at_ms ?? -Infinity)
-              : -Infinity
-
-          const enriched = points.map((p) => ({
-            ...p,
-            device_id: json?.device_id ?? p?.device_id ?? null
-          }))
-
-          const mapped = enriched
-            .map(adaptTelemetry)
-            .filter((p) => Number.isFinite(p.received_at_ms))
-            .sort((a, b) => a.received_at_ms - b.received_at_ms)
-            .filter((p) => p.received_at_ms > lastPrevMs)
-
-          if (!mapped.length) return prev
-
-          // ✅ NEW: mark real arrival of new data
-          setLatest(mapped[mapped.length - 1])
-          setLastNewSampleAt(Date.now())
-          backoffMs = 1000
-
-          return [...prev, ...mapped].slice(-600)
-        })
-      } catch (e) {
-        backoffMs = Math.min(backoffMs * 2, 15000)
-      } finally {
-        inFlight = false
-        if (alive) {
-          timeoutId = setTimeout(poll, backoffMs)
-        }
-      }
-    }
-
-    poll()
-
-    return () => {
-      alive = false
-      if (timeoutId) clearTimeout(timeoutId)
-      controller.abort()
-    }
-  }, [user])
-
-  // ✅ NEW: derive LIVE / STALE / OFFLINE
-  useEffect(() => {
-    const id = setInterval(() => {
-      if (!lastNewSampleAt) {
-        setStreamStatus("OFFLINE")
-        return
-      }
-
-      const age = Date.now() - lastNewSampleAt
-
-      if (age > 30000) setStreamStatus("OFFLINE")
-      else if (age > 5000) setStreamStatus("STALE")
-      else setStreamStatus("LIVE")
-    }, 500)
-
-    return () => clearInterval(id)
-  }, [lastNewSampleAt])
-
+function AppShell({ children }) {
   return (
-    <>
-      {user ? (
-        <div className="app-layout">
-          <Sidebar active={activePage} role={user.role} onNavigate={setActivePage} />
-
-          <div style={{ flex: 1 }}>
-            <TopBar
-              user={user}
-              onLogout={() => {
-                setUser(null)
-                setActivePage("dashboard")
-                setTelemetry([])
-                setLatest(null)
-                setLastNewSampleAt(null)
-                setStreamStatus("OFFLINE")
-              }}
-            />
-
-            <div className="main-content">
-              {activePage === "dashboard" && <Dashboard data={telemetry} />}
-
-              {activePage === "live" && (
-                <LiveMonitoring
-                  telemetry={telemetry}
-                  latest={latest}
-                  status={streamStatus} // ✅ pass status
-                />
-              )}
-
-              {activePage === "analytics" && user.role === "ADMIN" && <Analytics />}
-
-              {activePage === "devices" && (
-                <div className="container">
-                  <h2>Devices</h2>
-                  <p>Device status and metadata view.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <Login onLogin={setUser} />
-      )}
-    </>
+    <div className="app-shell">
+      <Sidebar />
+      <div className="app-main">
+        <TopBar />
+        <div className="app-content">{children}</div>
+      </div>
+    </div>
   )
 }
 
-export default App
+function RequireAuth({ children }) {
+  const ok = localStorage.getItem("loggedIn") === "1"
+  return ok ? children : <Navigate to="/login" replace />
+}
+
+const GROUPS = [
+  { id: "anesthesia-workstation", name: "Anesthesia Workstation", description: "Gas monitoring + device health" },
+  { id: "icu-monitor", name: "ICU Monitor", description: "Coming soon" },
+  { id: "ventilator", name: "Ventilator", description: "Coming soon" }
+]
+
+// ✅ Temporary devices only for anesthesia-workstation (until backend is ready)
+const TEMP_DEVICES_BY_GROUP = {
+  "anesthesia-workstation": [
+    { id: "AW-001", name: "OT-1 Workstation", location: "OT-1", status: "unknown" },
+    { id: "AW-002", name: "OT-2 Workstation", location: "OT-2", status: "unknown" }
+  ]
+}
+
+function GroupsPage() {
+  return (
+    <AppShell>
+      <div style={{ padding: 24 }}>
+        <h2 style={{ marginTop: 0, marginBottom: 12 }}>Device Groups</h2>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>
+          {GROUPS.map((g) => (
+            <Link
+              key={g.id}
+              to={`/groups/${g.id}/devices`}
+              style={{
+                textDecoration: "none",
+                border: "1px solid #e5e7eb",
+                borderRadius: 12,
+                padding: 16,
+                background: "white",
+                color: "#111827"
+              }}
+            >
+              <div style={{ fontWeight: 700, fontSize: 16 }}>{g.name}</div>
+              <div style={{ marginTop: 6, color: "#6b7280" }}>{g.description}</div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </AppShell>
+  )
+}
+
+function GroupDevicesPage() {
+  const { groupId } = useParams()
+  const group = GROUPS.find((g) => g.id === groupId)
+  const devices = TEMP_DEVICES_BY_GROUP[groupId] || []
+
+  return (
+    <AppShell>
+      <div style={{ padding: 24 }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+          <h2 style={{ margin: 0 }}>{group?.name || "Devices"}</h2>
+          <Link to="/groups" style={{ color: "#2563eb", textDecoration: "none" }}>
+            ← Back to groups
+          </Link>
+        </div>
+
+        {devices.length === 0 ? (
+          <div style={{ marginTop: 14, background: "white", border: "1px solid #e5e7eb", borderRadius: 12, padding: 16 }}>
+            <h3 style={{ marginTop: 0 }}>Under construction</h3>
+            <p style={{ color: "#6b7280", marginBottom: 0 }}>
+              No devices configured yet for this group.
+            </p>
+          </div>
+        ) : (
+          <div style={{ marginTop: 14, background: "white", border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "2fr 1fr 1fr 120px",
+                padding: 12,
+                fontWeight: 700,
+                borderBottom: "1px solid #e5e7eb"
+              }}
+            >
+              <div>Name</div>
+              <div>Location</div>
+              <div>Status</div>
+              <div />
+            </div>
+
+            {devices.map((d) => (
+              <div
+                key={d.id}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "2fr 1fr 1fr 120px",
+                  padding: 12,
+                  borderBottom: "1px solid #f3f4f6"
+                }}
+              >
+                <div>
+                  {d.name} <span style={{ color: "#6b7280" }}>({d.id})</span>
+                </div>
+                <div>{d.location}</div>
+                <div>{d.status}</div>
+                <div>
+                  <Link to={`/groups/${groupId}/devices/${d.id}/live`} style={{ color: "#2563eb" }}>
+                    View Live
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </AppShell>
+  )
+}
+
+function DeviceLivePage() {
+  const { groupId, deviceId } = useParams()
+
+  return (
+    <AppShell>
+      <div style={{ padding: 24 }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+          <div>
+            <h2 style={{ margin: 0 }}>{deviceId}</h2>
+            <div style={{ color: "#6b7280", marginTop: 4 }}>{groupId}</div>
+          </div>
+          <Link to={`/groups/${groupId}/devices`} style={{ color: "#2563eb", textDecoration: "none" }}>
+            ← Back to devices
+          </Link>
+        </div>
+
+        <div style={{ marginTop: 14, background: "white", border: "1px solid #e5e7eb", borderRadius: 12, padding: 16 }}>
+          <LiveTelemetryWrapper />
+        </div>
+      </div>
+    </AppShell>
+  )
+}
+
+function NotFound() {
+  return (
+    <AppShell>
+      <div style={{ padding: 24 }}>Not Found</div>
+    </AppShell>
+  )
+}
+
+export default function App() {
+  return (
+    <Routes>
+      {/* Root -> login */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+
+      {/* Public */}
+      <Route path="/login" element={<Login />} />
+
+      {/* Protected */}
+      <Route
+        path="/groups"
+        element={
+          <RequireAuth>
+            <GroupsPage />
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="/groups/:groupId/devices"
+        element={
+          <RequireAuth>
+            <GroupDevicesPage />
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="/groups/:groupId/devices/:deviceId/live"
+        element={
+          <RequireAuth>
+            <DeviceLivePage />
+          </RequireAuth>
+        }
+      />
+
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  )
+}

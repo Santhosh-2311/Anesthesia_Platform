@@ -42,9 +42,7 @@ function MonitorTooltip({ active, payload }) {
 }
 
 function StatusBadge({ status }) {
-  const bg =
-    status === "LIVE" ? "#16a34a" : status === "STALE" ? "#f59e0b" : "#dc2626"
-
+  const bg = status === "LIVE" ? "#16a34a" : status === "STALE" ? "#f59e0b" : "#dc2626"
   const label = status || "OFFLINE"
 
   return (
@@ -119,9 +117,7 @@ function MetricRow({ title, value, unit, dataKey, yDomain, data, status }) {
       <div className="lm-valueCard">
         <div className="lm-valueLabel">Current</div>
 
-        <div className="lm-valueBig">
-          {typeof value === "number" ? value.toFixed(1) : "--"}
-        </div>
+        <div className="lm-valueBig">{typeof value === "number" ? value.toFixed(1) : "--"}</div>
 
         <div className="lm-valueUnit">{unit}</div>
 
@@ -135,14 +131,15 @@ function MetricRow({ title, value, unit, dataKey, yDomain, data, status }) {
   )
 }
 
-// ✅ UPDATED: accepts telemetry + latest + status + lastDataArrivedAt (optional)
+// ✅ UPDATED: now also accepts deviceId (optional)
 export default function LiveMonitoring({
   telemetry = [],
   latest = null,
   status = "OFFLINE",
-  lastDataArrivedAt = null
+  lastDataArrivedAt = null,
+  deviceId = null
 }) {
-  // Prefer latest prop (from App polling); fallback to last telemetry item
+  // Prefer latest prop (from polling); fallback to last telemetry item
   const derivedLatest = latest ?? (telemetry.length ? telemetry[telemetry.length - 1] : null)
 
   // Use telemetry array to plot last POINTS points
@@ -164,7 +161,15 @@ export default function LiveMonitoring({
     <div className="container">
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
         <h2 style={{ margin: 0 }}>Live Monitoring</h2>
+
+        {deviceId && (
+          <span style={{ fontSize: 12, opacity: 0.7 }}>
+            Device: <b>{deviceId}</b>
+          </span>
+        )}
+
         <StatusBadge status={status} />
+
         {typeof ageMs === "number" && (
           <span style={{ fontSize: 12, opacity: 0.65 }}>
             Last update: {Math.max(0, Math.round(ageMs / 1000))}s ago
@@ -202,9 +207,7 @@ export default function LiveMonitoring({
         status={status}
       />
 
-      {!derivedLatest && (
-        <p style={{ marginTop: 10, color: "#666" }}>Waiting for telemetry...</p>
-      )}
+      {!derivedLatest && <p style={{ marginTop: 10, color: "#666" }}>Waiting for telemetry...</p>}
     </div>
   )
 }

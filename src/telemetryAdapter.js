@@ -1,53 +1,71 @@
+// src/telemetryAdapter.js
+
+function toMs(ts) {
+  const n = Number(ts)
+  if (!Number.isFinite(n)) return Date.now()
+  // seconds -> ms
+  return n < 2_000_000_000 ? n * 1000 : n
+}
+
+function adaptPoint(p, deviceId) {
+  if (!p || typeof p !== "object") return null
+
+  const o2 = Number(p.o2)
+  const n2o = Number(p.n2o)
+  const air = Number(p.air)
+
+  if (![o2, n2o, air].every(Number.isFinite)) return null
+
+  const tsMs = toMs(p.ts)
+
+  return {
+    timestamp: tsMs,
+    client_ts: tsMs,
+    o2,
+    n2o,
+    air,
+    deviceId: deviceId || ""
+  }
+}
+
 export function adaptTelemetry(raw) {
-  // NEW backend point format may be:
-  // A) { ts, uptime_ms, o2, n2o, air, device_id }
-  // B) { ts, uptime_ms, gases: { o2, n2o, air }, device_id }
+  if (!raw || typeof raw !== "object") return null
 
-  if (raw && typeof raw === "object" && raw.ts != null) {
-    const tsNum = Number(raw.ts)
-    const tsMs = Number.isFinite(tsNum) ? tsNum * 1000 : NaN
+  // ✅ NEW: API returns { device_id, count, latest_point: {...} }
+  if (raw.latest_point) {
+    return adaptPoint(raw.latest_point, raw.device_id)
+  }
 
-    const gases = raw.gases && typeof raw.gases === "object" ? raw.gases : null
+  // ✅ Older: API returns { device_id, count, points:[{...}] }
+  if (Array.isArray(raw.points) && raw.points.length) {
+    return adaptPoint(raw.points[raw.points.length - 1], raw.device_id)
+  }
 
-    const o2Val = gases?.o2 ?? raw.o2
-    const n2oVal = gases?.n2o ?? raw.n2o
-    const airVal = gases?.air ?? raw.air
+  // ✅ Single point {ts,o2,n2o,air} (with or without device_id)
+  if ("o2" in raw && "n2o" in raw && "air" in raw) {
+    return adaptPoint(raw, raw.device_id)
+  }
+
+  // ✅ Oldest: { gases:{o2,n2o,air}, ingested_at }
+  if (raw.gases) {
+    const o2 = Number(raw.gases.o2)
+    const n2o = Number(raw.gases.n2o)
+    const air = Number(raw.gases.air)
+
+    if (![o2, n2o, air].every(Number.isFinite)) return null
+
+    const t = Date.parse(raw.ingested_at)
+    const tsMs = Number.isFinite(t) ? t : Date.now()
 
     return {
-      // ✅ what charts should use
-      timestamp: Number.isFinite(tsMs) ? tsMs : Date.now(),
-
-      // ✅ browser receive time (stable, always increases)
-      client_ts: Date.now(),
-
-      // ✅ used by App.jsx for sort/dedupe
-      received_at: null,
-      received_at_ms: Number.isFinite(tsMs) ? tsMs : null,
-
-      // ✅ optional debug
-      uptime_ms: raw.uptime_ms != null ? Number(raw.uptime_ms) : null,
-
-      // ✅ gas values (avoid NaN if missing)
-      o2: o2Val != null ? Number(o2Val) : null,
-      n2o: n2oVal != null ? Number(n2oVal) : null,
-      air: airVal != null ? Number(airVal) : null,
-
-      deviceId: raw.device_id ?? raw.deviceId ?? null
+      timestamp: tsMs,
+      client_ts: tsMs,
+      o2,
+      n2o,
+      air,
+      deviceId: raw.device_id || ""
     }
   }
 
-  // OLD format fallback (if backend switches back)
-  const receivedAtStr = raw?.received_at ?? null
-  const receivedAtMs = receivedAtStr ? Date.parse(receivedAtStr) : NaN
-
-  return {
-    timestamp: Number.isFinite(receivedAtMs) ? receivedAtMs : Date.now(),
-    client_ts: Date.now(),
-    received_at: receivedAtStr,
-    received_at_ms: Number.isFinite(receivedAtMs) ? receivedAtMs : null,
-    o2: raw?.oxygen_percent != null ? Number(raw.oxygen_percent) : null,
-    n2o: raw?.nitrous_percent != null ? Number(raw.nitrous_percent) : null,
-    air: raw?.air_percent != null ? Number(raw.air_percent) : null,
-    deviceId: raw?.device_id ?? null
-  }
+  return null
 }
