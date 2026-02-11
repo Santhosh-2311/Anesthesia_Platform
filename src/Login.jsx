@@ -1,53 +1,62 @@
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
 
-function Login() {
+export default function Login({ onLogin }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const navigate = useNavigate()
 
-  const handleLogin = () => {
+  const handleSubmit = (e) => {
+    e.preventDefault() // ✅ prevents refresh
     if (!email || !password) return
 
-    // TEMP mock auth: decide role from email
-    const isAdmin = email.toLowerCase().includes("admin")
+    // ✅ your existing dummy login logic (keep role logic same if you had it)
+    const role = email.toLowerCase().includes("admin") ? "ADMIN" : "CLINICIAN"
 
-    const user = {
-      name: isAdmin ? "Admin User" : "Clinician",
-      role: isAdmin ? "ADMIN" : "CLINICIAN",
-      email
-    }
-
-    // ✅ mark session + store user details
-    localStorage.setItem("loggedIn", "1")
-    localStorage.setItem("user", JSON.stringify(user))
-
-    // ✅ go to platform home
-    navigate("/groups")
+    onLogin({
+      email,
+      role,
+      name: role === "ADMIN" ? "Admin User" : "Clinician User"
+    })
   }
 
   return (
-    <div className="container">
-      <h2>Login</h2>
+    <div className="container" style={{ maxWidth: 900, margin: "40px auto" }}>
+      <div
+        style={{
+          background: "#fff",
+          padding: 24,
+          borderRadius: 12,
+          boxShadow: "0 6px 18px rgba(0,0,0,0.08)"
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Login</h2>
 
-      <label>Email</label>
-      <input
-        placeholder="Enter email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ display: "block", marginBottom: 6 }}>Email</label>
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin@example.com"
+              style={{ width: "100%", padding: 10 }}
+            />
+          </div>
 
-      <label>Password</label>
-      <input
-        type="password"
-        placeholder="Enter password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: "block", marginBottom: 6 }}>Password</label>
+            <input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              type="password"
+              placeholder="••••••••"
+              style={{ width: "100%", padding: 10 }}
+            />
+          </div>
 
-      <button onClick={handleLogin}>Login</button>
+          <button type="submit" style={{ padding: "10px 18px" }}>
+            Login
+          </button>
+        </form>
+      </div>
     </div>
   )
 }
-
-export default Login
