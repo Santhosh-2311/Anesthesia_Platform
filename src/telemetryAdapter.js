@@ -1,68 +1,80 @@
-export function adaptTelemetry(raw) {
-  // NEW backend format:
-  // { device_id, count, latest_point: { ts, uptime_ms, metrics: { "gas.fio2": ..., ... } } }
+// src/telemetryAdapter.js
 
-  const latestPoint =
-    raw?.latest_point && typeof raw.latest_point === "object"
-      ? raw.latest_point
-      : raw // allow passing latest_point directly if you want
+function toNumber(v) {
+  const n = Number(v)
+  return Number.isFinite(n) ? n : null
+}
 
-  const metrics = latestPoint?.metrics && typeof latestPoint.metrics === "object"
-    ? latestPoint.metrics
-    : {}
+function toString(v) {
+  if (v === null || v === undefined) return null
+  const s = String(v).trim()
+  return s.length ? s : null
+}
 
-  const tsNum = Number(latestPoint?.ts)
-  const tsMs = Number.isFinite(tsNum) ? tsNum * 1000 : NaN
+/**
+ * Adapts backend payload:
+ * {
+ *   device_id,
+ *   count,
+ *   latest_point: {
+ *     ts, uptime_ms,
+ *     metrics: { "gas.fio2": 34.5, ... }
+ *   }
+ * }
+ */
+export function adaptLatestTelemetry(payload) {
+  const lp = payload?.latest_point
 
-  // Helper to safely read numbers
-  const num = (k) => {
-    const v = metrics[k]
-    const n = Number(v)
-    return Number.isFinite(n) ? n : null
-  }
+  // ✅ If backend says count:0 and latest_point:null
+  // return null so UI/hook can treat as NO DATA
+  if (!lp) return null
+
+  const metrics = lp.metrics || {}
+
+  const tsSec = toNumber(lp.ts)
+  const tsMs = tsSec ? Math.round(tsSec * 1000) : Date.now()
 
   return {
-    // charts/time
-    timestamp: Number.isFinite(tsMs) ? tsMs : Date.now(),
-    client_ts: Date.now(),
+    deviceId: payload?.device_id ?? lp?.device_id ?? null,
+    tsMs,
+    uptimeMs: toNumber(lp.uptime_ms),
 
-    // debug
-    received_at: null,
-    received_at_ms: Number.isFinite(tsMs) ? tsMs : null,
-    uptime_ms: latestPoint?.uptime_ms != null ? Number(latestPoint.uptime_ms) : null,
+    // Gas mix (%)
+    fio2: toNumber(metrics["gas.fio2"]),
+    n2o: toNumber(metrics["gas.n2o_conc"]),
+    air: toNumber(metrics["gas.air_conc"]),
 
-    // device id
-    deviceId: latestPoint?.device_id ?? raw?.device_id ?? null,
+    // Flow (L/min)
+    o2Flow: toNumber(metrics["flow.o2_lpm"]),
+    airFlow: toNumber(metrics["flow.air_lpm"]),
+    n2oFlow: toNumber(metrics["flow.n2o_lpm"]),
+    totalFlow: toNumber(metrics["flow.total_lpm"]),
 
-    // ====== gases (these replace your old o2/n2o/air %) ======
-    fio2: num("gas.fio2"),
-    n2o_conc: num("gas.n2o_conc"),
-    air_conc: num("gas.air_conc"),
+    // Ventilator settings
+    mode: toString(metrics["ventilator.mode"]),
+    rrSet: toNumber(metrics["ventilator.rr_set"]),
 
-    // ====== flows ======
-    o2_lpm: num("flow.o2_lpm"),
-    air_lpm: num("flow.air_lpm"),
-    n2o_lpm: num("flow.n2o_lpm"),
-    total_lpm: num("flow.total_lpm"),
+    // Pressures (cmH2O)
+    peep: toNumber(metrics["pressures.peep"]),
+    pip: toNumber(metrics["pressures.pip"]),
 
-    // ====== ventilator ======
-    vent_mode: metrics["ventilator.mode"] ?? null,
-    rr_set: num("ventilator.rr_set"),
+    // Volumes
+    vtSet: toNumber(metrics["volumes.vt_set_ml"]),
+    vtMeasured: toNumber(metrics["volumes.vt_measured_ml"]),
+    ieSet: toString(metrics["volumes.ie_set"]),
+    tiSet: toNumber(metrics["volumes.ti_set_s"]),
+    teSet: toNumber(metrics["volumes.te_set_s"]),
 
-    // ====== pressures ======
-    peep: num("pressures.peep"),
-    pip: num("pressures.pip"),
-
-    // ====== volumes ======
-    vt_set_ml: num("volumes.vt_set_ml"),
-    vt_measured_ml: num("volumes.vt_measured_ml"),
-    ie_set: metrics["volumes.ie_set"] ?? null,
-    ti_set_s: num("volumes.ti_set_s"),
-    te_set_s: num("volumes.te_set_s"),
-
-    // ====== lines ======
-    line_o2_kpa: num("lines.main_high_pressure.o2_kpa"),
-    line_n2_kpa: num("lines.main_high_pressure.n2_kpa"),
-    line_air_kpa: num("lines.main_high_pressure.air_kpa")
+    // Line pressures (kPa)
+    o2_kpa: toNumber(metrics["lines.main_high_pressure.o2_kpa"]),
+    n2_kpa: toNumber(metrics["lines.main_high_pressure.n2_kpa"]),
+    air_kpa: toNumber(metrics["lines.main_high_pressure.air_kpa"]),
   }
 }
+
+/**
+ * ✅ Backward-compatible exports for old code
+ * Some files import { adaptTelemetry } or { adaptLatestTelemetry }
+ */
+export const adaptTelemetry = adaptLatestTelemetry
+export const adaptLatest = adaptLatestTelemetry

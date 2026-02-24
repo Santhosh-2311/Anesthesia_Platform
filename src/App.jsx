@@ -1,134 +1,135 @@
-import { useState, useEffect } from "react"
+import { Routes, Route, Navigate } from "react-router-dom"
 import Login from "./Login"
-import Dashboard from "./Dashboard"
-import Analytics from "./Analytics"
 import Sidebar from "./Sidebar"
 import TopBar from "./TopBar"
-import LiveMonitoring from "./LiveMonitoring"
-import { adaptTelemetry } from "./telemetryAdapter"
 
-function App() {
-  const [telemetry, setTelemetry] = useState([])
-  const [latest, setLatest] = useState(null)
-  const [user, setUser] = useState(null)
-  const [activePage, setActivePage] = useState("dashboard")
+import Dashboard from "./Dashboard"
+import Devices from "./Devices"
+import LiveTelemetry from "./LiveTelemetry"
+import Diagnostics from "./Diagnostics"
+import Analytics from "./Analytics"
+import MetricTrend from "./MetricTrend"
 
-  useEffect(() => {
-    if (!user) return
+import "./App.css"
 
-    let alive = true
-    let timeoutId = null
-    let inFlight = false
-    let backoffMs = 1000
-    const controller = new AbortController()
-
-    const poll = async () => {
-      if (!alive || inFlight) return
-      inFlight = true
-
-      try {
-        const url =
-          "https://tdeoo8mxk3.execute-api.ap-south-1.amazonaws.com/latest" +
-          "?_=" +
-          Date.now()
-
-        const res = await fetch(url, {
-          signal: controller.signal,
-          cache: "no-store"
-        })
-
-        if (!res.ok) {
-          if (res.status === 503 || res.status === 429) {
-            backoffMs = Math.min(backoffMs * 2, 15000)
-          } else {
-            backoffMs = Math.min(backoffMs + 1000, 15000)
-          }
-          return
-        }
-
-        const json = await res.json()
-        console.log("RAW JSON (full response):", json)
-
-        const lp = json?.latest_point
-        if (!lp) return
-
-        const t = adaptTelemetry(json) // adapter expects { latest_point, device_id, ... }
-
-        setTelemetry((prev) => {
-          const last = prev.length ? prev[prev.length - 1] : null
-          const lastMs = last?.received_at_ms ?? -Infinity
-
-          // Only append if backend ts advanced
-          if (t.received_at_ms != null && t.received_at_ms <= lastMs) {
-            // still update "latest" so UI doesn't freeze if values changed without ts (rare)
-            setLatest(t)
-            backoffMs = 1000
-            return prev
-          }
-
-          setLatest(t)
-          backoffMs = 1000
-          return [...prev, t].slice(-600)
-        })
-      } catch (e) {
-        backoffMs = Math.min(backoffMs * 2, 15000)
-      } finally {
-        inFlight = false
-        if (alive) {
-          timeoutId = setTimeout(poll, backoffMs)
-        }
-      }
-    }
-
-    poll()
-
-    return () => {
-      alive = false
-      if (timeoutId) clearTimeout(timeoutId)
-      controller.abort()
-    }
-  }, [user])
-
+function AppShell({ children }) {
   return (
-    <>
-      {user ? (
-        <div className="app-layout">
-          <Sidebar active={activePage} role={user.role} onNavigate={setActivePage} />
-
-          <div style={{ flex: 1 }}>
-            <TopBar
-              user={user}
-              onLogout={() => {
-                setUser(null)
-                setActivePage("dashboard")
-                setTelemetry([])
-                setLatest(null)
-              }}
-            />
-
-            <div className="main-content">
-              {activePage === "dashboard" && <Dashboard data={telemetry} />}
-
-              {activePage === "live" && (
-                <LiveMonitoring telemetry={telemetry} latest={latest} />
-              )}
-
-              {activePage === "analytics" && user.role === "ADMIN" && <Analytics />}
-
-              {activePage === "devices" && (
-                <div className="container">
-                  <h2>Devices</h2>
-                  <p>Device status and metadata view.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <Login onLogin={setUser} />
-      )}
-    </>
+    <div className="app-shell">
+      <Sidebar />
+      <div className="app-main">
+        <TopBar />
+        <div className="app-content">{children}</div>
+      </div>
+    </div>
   )
 }
 
-export default App
+function RequireAuth({ children }) {
+  const loggedIn = localStorage.getItem("loggedIn") === "1"
+  return loggedIn ? children : <Navigate to="/login" replace />
+}
+
+function RootRedirect() {
+  const loggedIn = localStorage.getItem("loggedIn") === "1"
+  return <Navigate to={loggedIn ? "/groups" : "/login"} replace />
+}
+
+function NotFoundRedirect() {
+  const loggedIn = localStorage.getItem("loggedIn") === "1"
+  return <Navigate to={loggedIn ? "/groups" : "/login"} replace />
+}
+
+function DiagnosticsRedirect() {
+  const groupId =
+    localStorage.getItem("selectedGroupId") || "anesthesia-workstation"
+  const deviceId = localStorage.getItem("selectedDeviceId") || "AW-001"
+  return <Navigate to={`/groups/${groupId}/devices/${deviceId}/diagnostics`} replace />
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<RootRedirect />} />
+      <Route path="/login" element={<Login />} />
+
+      <Route
+        path="/groups"
+        element={
+          <RequireAuth>
+            <AppShell>
+              <Dashboard />
+            </AppShell>
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="/groups/:groupId/devices"
+        element={
+          <RequireAuth>
+            <AppShell>
+              <Devices />
+            </AppShell>
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="/groups/:groupId/devices/:deviceId/live"
+        element={
+          <RequireAuth>
+            <AppShell>
+              <LiveTelemetry />
+            </AppShell>
+          </RequireAuth>
+        }
+      />
+
+      {/* Single-metric trend page (opened by clicking tiles) */}
+      <Route
+        path="/groups/:groupId/devices/:deviceId/metric/:metricKey"
+        element={
+          <RequireAuth>
+            <AppShell>
+              <MetricTrend />
+            </AppShell>
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="/groups/:groupId/devices/:deviceId/diagnostics"
+        element={
+          <RequireAuth>
+            <AppShell>
+              <Diagnostics />
+            </AppShell>
+          </RequireAuth>
+        }
+      />
+
+      {/* Alias so /diagnostics works too */}
+      <Route
+        path="/diagnostics"
+        element={
+          <RequireAuth>
+            <DiagnosticsRedirect />
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="/analytics"
+        element={
+          <RequireAuth>
+            <AppShell>
+              <Analytics />
+            </AppShell>
+          </RequireAuth>
+        }
+      />
+
+      <Route path="*" element={<NotFoundRedirect />} />
+    </Routes>
+  )
+}
