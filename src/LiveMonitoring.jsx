@@ -317,7 +317,7 @@ export default function LiveMonitoring({ latest, telemetry = [], status, lastUpd
           <h1 className="titleBig">
             Live Monitoring — <span className="mono">{deviceId}</span>
           </h1>
-          <div className="muted">Backend device_id: (mapped in LiveTelemetry)</div>
+          {/* <div className="muted">Backend device_id: (mapped in LiveTelemetry)</div> */}
         </div>
 
         <div className="statusRow">
