@@ -10,6 +10,10 @@ import Diagnostics from "./Diagnostics"
 import Analytics from "./Analytics"
 import MetricTrend from "./MetricTrend"
 
+// ✅ NEW: Historical pages
+import HistoricalTrends from "./HistoricalTrends"
+import HistoricalMetricTrend from "./HistoricalMetricTrend"
+
 import "./App.css"
 
 function AppShell({ children }) {
@@ -43,7 +47,12 @@ function DiagnosticsRedirect() {
   const groupId =
     localStorage.getItem("selectedGroupId") || "anesthesia-workstation"
   const deviceId = localStorage.getItem("selectedDeviceId") || "AW-001"
-  return <Navigate to={`/groups/${groupId}/devices/${deviceId}/diagnostics`} replace />
+  return (
+    <Navigate
+      to={`/groups/${groupId}/devices/${deviceId}/diagnostics`}
+      replace
+    />
+  )
 }
 
 export default function App() {
@@ -85,13 +94,37 @@ export default function App() {
         }
       />
 
-      {/* Single-metric trend page (opened by clicking tiles) */}
+      {/* Single-metric LIVE trend page (opened by clicking tiles) */}
       <Route
         path="/groups/:groupId/devices/:deviceId/metric/:metricKey"
         element={
           <RequireAuth>
             <AppShell>
               <MetricTrend />
+            </AppShell>
+          </RequireAuth>
+        }
+      />
+
+      {/* ✅ NEW: Historical dashboard */}
+      <Route
+        path="/groups/:groupId/devices/:deviceId/history"
+        element={
+          <RequireAuth>
+            <AppShell>
+              <HistoricalTrends />
+            </AppShell>
+          </RequireAuth>
+        }
+      />
+
+      {/* ✅ NEW: Historical single metric */}
+      <Route
+        path="/groups/:groupId/devices/:deviceId/history/:metricKey"
+        element={
+          <RequireAuth>
+            <AppShell>
+              <HistoricalMetricTrend />
             </AppShell>
           </RequireAuth>
         }

@@ -23,8 +23,13 @@ export default function Sidebar() {
     location.pathname
   )
 
-  const isLivePage = new RegExp(
-    `^/groups/${groupId}/devices/[^/]+/live$`
+  const isLivePage = new RegExp(`^/groups/${groupId}/devices/[^/]+/live$`).test(
+    location.pathname
+  )
+
+  // ✅ NEW: history pages (both dashboard and single metric)
+  const isHistoryPage = new RegExp(
+    `^/groups/${groupId}/devices/[^/]+/history(/[^/]+)?$`
   ).test(location.pathname)
 
   const isDiagnosticsPage = new RegExp(
@@ -52,7 +57,14 @@ export default function Sidebar() {
         Live Monitoring
       </NavLink>
 
-      {/* ✅ FIX: correct diagnostics route */}
+      {/* ✅ NEW */}
+      <NavLink
+        to={`/groups/${groupId}/devices/${deviceId}/history`}
+        className={cls(isHistoryPage)}
+      >
+        Historical Trends
+      </NavLink>
+
       <NavLink
         to={`/groups/${groupId}/devices/${deviceId}/diagnostics`}
         className={cls(isDiagnosticsPage)}
