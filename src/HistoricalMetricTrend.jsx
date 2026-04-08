@@ -18,9 +18,11 @@ function resolveBackendDeviceId(routeDeviceId) {
   return DEVICE_ID_MAP[routeDeviceId] || routeDeviceId
 }
 
-function parseLocalTime(str) {
+// ✅ Treat backend historical time as UTC
+function parseBackendTimeUtc(str) {
   if (!str) return null
 
+  // format: "2026-02-26 07:00:00.000"
   const [datePart, timePart] = str.split(" ")
   if (!datePart || !timePart) return null
 
@@ -28,14 +30,19 @@ function parseLocalTime(str) {
   const [hour, minute, secondMs] = timePart.split(":")
   const [second] = secondMs.split(".")
 
-  return new Date(
+  return Date.UTC(
     year,
     month - 1,
     day,
     Number(hour),
     Number(minute),
     Number(second)
-  ).getTime()
+  )
+}
+
+function toFiniteNumber(v) {
+  const n = Number(v)
+  return Number.isFinite(n) ? n : null
 }
 
 const METRICS = {
@@ -62,6 +69,7 @@ function fmtTick(ms) {
   return new Date(ms).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
+    second: "2-digit",
     hour12: false,
   })
 }
@@ -95,6 +103,12 @@ export default function HistoricalMetricTrend() {
       if (Array.isArray(json)) normalized = json
       else if (Array.isArray(json?.data)) normalized = json.data
 
+      normalized.sort(
+        (a, b) =>
+          (parseBackendTimeUtc(a?.time) || 0) -
+          (parseBackendTimeUtc(b?.time) || 0)
+      )
+
       setRows(normalized)
     } catch (e) {
       console.error(e)
@@ -107,22 +121,22 @@ export default function HistoricalMetricTrend() {
   const chartData = useMemo(() => {
     return rows
       .map((r) => {
-        if (!r.time) return null
+        const tsMs = parseBackendTimeUtc(r?.time)
+        const v = toFiniteNumber(r?.[metricKey])
 
-        const ts = parseLocalTime(r.time)
-        if (!ts) return null
+        if (!tsMs || v === null) return null
 
         return {
-          t: ts,
-          v: Number(r[metricKey]),
+          t: tsMs,
+          v,
         }
       })
-      .filter((d) => d && Number.isFinite(d.v))
+      .filter(Boolean)
   }, [rows, metricKey])
 
-  const chartWidth = Math.max(chartData.length * 6, 1000)
-
   if (!meta) return <div>Unknown metric</div>
+
+  const chartWidth = Math.max(chartData.length * 8, 1000)
 
   return (
     <div>
@@ -166,6 +180,7 @@ export default function HistoricalMetricTrend() {
             scale="time"
             domain={["dataMin", "dataMax"]}
             tickFormatter={fmtTick}
+            minTickGap={40}
           />
           <YAxis domain={meta.yDomain || ["auto", "auto"]} />
           <Tooltip
@@ -179,6 +194,7 @@ export default function HistoricalMetricTrend() {
             dataKey="v"
             dot={false}
             strokeWidth={2}
+            connectNulls
             isAnimationActive={false}
           />
         </LineChart>

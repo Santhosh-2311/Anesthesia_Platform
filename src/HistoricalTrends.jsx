@@ -18,10 +18,11 @@ function resolveBackendDeviceId(routeDeviceId) {
   return DEVICE_ID_MAP[routeDeviceId] || routeDeviceId
 }
 
-function parseLocalTime(str) {
+// ✅ Treat backend historical time as UTC
+function parseBackendTimeUtc(str) {
   if (!str) return null
 
-  // format: "2026-02-26 06:31:00.000"
+  // format: "2026-02-26 07:00:00.000"
   const [datePart, timePart] = str.split(" ")
   if (!datePart || !timePart) return null
 
@@ -29,14 +30,19 @@ function parseLocalTime(str) {
   const [hour, minute, secondMs] = timePart.split(":")
   const [second] = secondMs.split(".")
 
-  return new Date(
+  return Date.UTC(
     year,
     month - 1,
     day,
     Number(hour),
     Number(minute),
     Number(second)
-  ).getTime()
+  )
+}
+
+function toFiniteNumber(v) {
+  const n = Number(v)
+  return Number.isFinite(n) ? n : null
 }
 
 const GROUPS = [
@@ -70,8 +76,24 @@ function fmtTick(ms) {
   return new Date(ms).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
+    second: "2-digit",
     hour12: false,
   })
+}
+
+function normalizeHistoricalRow(r) {
+  const tsMs = parseBackendTimeUtc(r?.time)
+  if (!tsMs) return null
+
+  return {
+    t: tsMs,
+    fio2: toFiniteNumber(r?.fio2),
+    n2o: toFiniteNumber(r?.n2o),
+    air: toFiniteNumber(r?.air),
+    pip: toFiniteNumber(r?.pip),
+    peep: toFiniteNumber(r?.peep),
+    vt_measured_ml: toFiniteNumber(r?.vt_measured_ml),
+  }
 }
 
 export default function HistoricalTrends() {
@@ -101,6 +123,12 @@ export default function HistoricalTrends() {
       if (Array.isArray(json)) normalized = json
       else if (Array.isArray(json?.data)) normalized = json.data
 
+      normalized.sort(
+        (a, b) =>
+          (parseBackendTimeUtc(a?.time) || 0) -
+          (parseBackendTimeUtc(b?.time) || 0)
+      )
+
       setRows(normalized)
     } catch (e) {
       console.error(e)
@@ -111,24 +139,7 @@ export default function HistoricalTrends() {
   }
 
   const chartRows = useMemo(() => {
-    return rows
-      .map((r) => {
-        if (!r.time) return null
-
-        const ts = parseLocalTime(r.time)
-        if (!ts) return null
-
-        return {
-          t: ts,
-          fio2: r.fio2,
-          n2o: r.n2o,
-          air: r.air,
-          pip: r.pip,
-          peep: r.peep,
-          vt_measured_ml: r.vt_measured_ml,
-        }
-      })
-      .filter(Boolean)
+    return rows.map(normalizeHistoricalRow).filter(Boolean)
   }, [rows])
 
   const chartWidth = Math.max(chartRows.length * 8, 1200)
@@ -169,6 +180,7 @@ export default function HistoricalTrends() {
                 scale="time"
                 domain={["dataMin", "dataMax"]}
                 tickFormatter={fmtTick}
+                minTickGap={40}
               />
               <YAxis domain={g.yDomain || ["auto", "auto"]} />
               <Tooltip
@@ -183,6 +195,7 @@ export default function HistoricalTrends() {
                   dataKey={key}
                   dot={false}
                   strokeWidth={2}
+                  connectNulls
                   isAnimationActive={false}
                 />
               ))}
