@@ -1,78 +1,136 @@
 import { Link, useParams } from "react-router-dom"
+import workstationImg from "./assets/anesthesia-workstation.png"
+import spirometerImg from "./assets/spirometer.png"
 
-const TEMP_DEVICES_BY_GROUP = {
-  "anesthesia-workstation": [
-    { id: "AW-001", name: "OT-1 Workstation", location: "OT-1", status: "unknown" },
-    { id: "AW-002", name: "OT-2 Workstation", location: "OT-2", status: "unknown" },
-  ],
-}
-
-const GROUP_TITLES = {
-  "anesthesia-workstation": "Anesthesia Workstation",
+const DEVICE_GROUPS = {
+  "anesthesia-workstation": {
+    title: "Anesthesia Workstations",
+    devices: [
+      {
+        id: "AW-1001",
+        name: "Anesthesia Workstation 1",
+        category: "ANESTHESIA WORKSTATIONS",
+        location: "ICU - OR 1",
+        calibration: "01-Apr-2026",
+        status: "online",
+        image: workstationImg,
+      },
+      {
+        id: "AW-1002",
+        name: "Anesthesia Workstation 2",
+        category: "ANESTHESIA WORKSTATIONS",
+        location: "ICU - OR 2",
+        calibration: "01-Apr-2026",
+        status: "online",
+        image: workstationImg,
+      },
+      {
+        id: "SP-2001",
+        name: "Spirometer 1",
+        category: "SPIROMETERS",
+        location: "Pulmonary Lab 1",
+        calibration: "01-Apr-2026",
+        status: "online",
+        image: spirometerImg,
+      },
+    ],
+  },
 }
 
 export default function Devices() {
-  const { groupId } = useParams()
-  const devices = TEMP_DEVICES_BY_GROUP[groupId] || []
-  const title = GROUP_TITLES[groupId] || "Devices"
+  const groupId = "anesthesia-workstation"
 
-  // Save selection so Sidebar links work correctly (Live/Diagnostics)
-  const rememberSelection = (deviceId) => {
-    if (groupId) localStorage.setItem("selectedGroupId", groupId)
-    if (deviceId) localStorage.setItem("selectedDeviceId", deviceId)
+  const group = DEVICE_GROUPS[groupId]
+
+  if (!group) {
+    return <div className="page-empty">No devices found.</div>
+  }
+
+  const groupedDevices = group.devices.reduce((acc, device) => {
+    if (!acc[device.category]) {
+      acc[device.category] = []
+    }
+
+    acc[device.category].push(device)
+    return acc
+  }, {})
+
+  function rememberSelection(deviceId) {
+    localStorage.setItem("selectedGroupId", groupId)
+    localStorage.setItem("selectedDeviceId", deviceId)
   }
 
   return (
-    <div>
-      {/* Old-style header: big title + back link */}
-      <div className="pageHeaderRow">
-        <h1 className="titleBig">{title}</h1>
-        <Link className="backLink" to="/groups" onClick={() => rememberSelection(null)}>
-          ← Back to groups
-        </Link>
+    <div className="device-page">
+      <div className="device-page-header">
+        <div>
+          <div className="device-page-title">Device List</div>
+          <div className="device-page-subtitle">
+            Select a device to view its details and real-time data
+          </div>
+        </div>
+
+        <div className="device-toolbar">
+          <input
+            type="text"
+            placeholder="Search devices..."
+            className="device-search"
+          />
+
+          <button className="new-device-btn">+ New Tab</button>
+        </div>
       </div>
 
-      <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-        <table className="table">
-          <thead>
-            <tr>
-              <th style={{ width: "55%" }}>Name</th>
-              <th style={{ width: "15%" }}>Location</th>
-              <th style={{ width: "15%" }}>Status</th>
-              <th style={{ width: "15%", textAlign: "right" }}>Action</th>
-            </tr>
-          </thead>
+      <div className="device-tabs">
+        <button className="device-tab active">All Devices (24)</button>
+        <button className="device-tab">Active (18)</button>
+        <button className="device-tab">Maintenance (3)</button>
+        <button className="device-tab">Offline (3)</button>
+      </div>
 
-          <tbody>
-            {devices.map((d) => (
-              <tr key={d.id}>
-                <td className="strong">
-                  {d.name} <span className="muted">({d.id})</span>
-                </td>
-                <td>{d.location}</td>
-                <td className="muted">{d.status}</td>
-                <td style={{ textAlign: "right" }}>
-                  <Link
-                    className="linkBtn"
-                    to={`/groups/${groupId}/devices/${d.id}/live`}
-                    onClick={() => rememberSelection(d.id)}
-                  >
-                    View Live
-                  </Link>
-                </td>
-              </tr>
+      {Object.entries(groupedDevices).map(([category, devices]) => (
+        <div key={category} className="device-section">
+          <div className="device-section-header">
+            <h2>{category}</h2>
+            <button className="view-all-btn">View All →</button>
+          </div>
+
+          <div className="device-card-grid">
+            {devices.map((device) => (
+              <div className="device-card" key={device.id}>
+                <div className="device-status online">
+                  <span className="status-dot"></span>
+                  Online
+                </div>
+
+                <div className="device-image-wrap">
+                  <img
+                    src={device.image}
+                    alt={device.name}
+                    className="device-image"
+                  />
+                </div>
+
+                <div className="device-name">{device.name}</div>
+                <div className="device-id">{device.id}</div>
+
+                <div className="device-meta">
+                  <div>Location: {device.location}</div>
+                  <div>Last Calibration: {device.calibration}</div>
+                </div>
+
+                <Link
+                  to={`/devices/${device.id}/live`}
+                  className="select-device-btn"
+                  onClick={() => rememberSelection(device.id)}
+                >
+                  Select
+                </Link>
+              </div>
             ))}
-
-            {!devices.length ? (
-              <tr>
-                <td colSpan="4" className="muted" style={{ padding: 14 }}>
-                  No devices configured.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

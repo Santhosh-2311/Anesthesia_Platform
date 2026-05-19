@@ -30,6 +30,8 @@ export async function fetchLatestTelemetry(arg) {
       : arg && typeof arg === "object"
       ? arg.deviceId
       : undefined
+      
+      console.log("FETCH DEVICE ID:", deviceId)
 
   const params = new URLSearchParams()
   params.set("_", String(Date.now()))

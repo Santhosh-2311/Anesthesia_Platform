@@ -1,7 +1,12 @@
-import { Routes, Route, Navigate } from "react-router-dom"
+import {
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom"
+
 import Login from "./Login"
 import Sidebar from "./Sidebar"
-import TopBar from "./TopBar"
 
 import Dashboard from "./Dashboard"
 import Devices from "./Devices"
@@ -10,46 +15,64 @@ import Diagnostics from "./Diagnostics"
 import Analytics from "./Analytics"
 import MetricTrend from "./MetricTrend"
 
-// ✅ NEW: Historical pages
 import HistoricalTrends from "./HistoricalTrends"
 import HistoricalMetricTrend from "./HistoricalMetricTrend"
 
 import "./App.css"
 
 function AppShell({ children }) {
+
   return (
     <div className="app-shell">
+
       <Sidebar />
+
       <div className="app-main">
-        <TopBar />
-        <div className="app-content">{children}</div>
+
+        <div className="app-content">
+          {children}
+        </div>
+
       </div>
     </div>
   )
 }
-
 function RequireAuth({ children }) {
   const loggedIn = localStorage.getItem("loggedIn") === "1"
+
   return loggedIn ? children : <Navigate to="/login" replace />
 }
 
 function RootRedirect() {
   const loggedIn = localStorage.getItem("loggedIn") === "1"
-  return <Navigate to={loggedIn ? "/groups" : "/login"} replace />
+
+  return (
+    <Navigate
+      to={loggedIn ? "/dashboard" : "/login"}
+      replace
+    />
+  )
 }
 
 function NotFoundRedirect() {
   const loggedIn = localStorage.getItem("loggedIn") === "1"
-  return <Navigate to={loggedIn ? "/groups" : "/login"} replace />
+
+  return (
+    <Navigate
+      to={loggedIn ? "/dashboard" : "/login"}
+      replace
+    />
+  )
 }
 
 function DiagnosticsRedirect() {
-  const groupId =
-    localStorage.getItem("selectedGroupId") || "anesthesia-workstation"
-  const deviceId = localStorage.getItem("selectedDeviceId") || "AW-001"
+  const deviceId =
+    localStorage.getItem("selectedDeviceId") ||
+    "AW-1001"
+
   return (
     <Navigate
-      to={`/groups/${groupId}/devices/${deviceId}/diagnostics`}
+      to={`/devices/${deviceId}/diagnostics`}
       replace
     />
   )
@@ -59,10 +82,12 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<RootRedirect />} />
+
       <Route path="/login" element={<Login />} />
 
+      {/* DASHBOARD */}
       <Route
-        path="/groups"
+        path="/dashboard"
         element={
           <RequireAuth>
             <AppShell>
@@ -72,8 +97,9 @@ export default function App() {
         }
       />
 
+      {/* DEVICE LIST */}
       <Route
-        path="/groups/:groupId/devices"
+        path="/devices"
         element={
           <RequireAuth>
             <AppShell>
@@ -83,8 +109,9 @@ export default function App() {
         }
       />
 
+      {/* LIVE MONITORING */}
       <Route
-        path="/groups/:groupId/devices/:deviceId/live"
+        path="/devices/:deviceId/live"
         element={
           <RequireAuth>
             <AppShell>
@@ -94,9 +121,9 @@ export default function App() {
         }
       />
 
-      {/* Single-metric LIVE trend page (opened by clicking tiles) */}
+      {/* LIVE METRIC */}
       <Route
-        path="/groups/:groupId/devices/:deviceId/metric/:metricKey"
+        path="/devices/:deviceId/metric/:metricKey"
         element={
           <RequireAuth>
             <AppShell>
@@ -106,9 +133,9 @@ export default function App() {
         }
       />
 
-      {/* ✅ NEW: Historical dashboard */}
+      {/* HISTORY */}
       <Route
-        path="/groups/:groupId/devices/:deviceId/history"
+        path="/devices/:deviceId/history"
         element={
           <RequireAuth>
             <AppShell>
@@ -118,9 +145,9 @@ export default function App() {
         }
       />
 
-      {/* ✅ NEW: Historical single metric */}
+      {/* HISTORY METRIC */}
       <Route
-        path="/groups/:groupId/devices/:deviceId/history/:metricKey"
+        path="/devices/:deviceId/history/:metricKey"
         element={
           <RequireAuth>
             <AppShell>
@@ -130,8 +157,9 @@ export default function App() {
         }
       />
 
+      {/* DIAGNOSTICS */}
       <Route
-        path="/groups/:groupId/devices/:deviceId/diagnostics"
+        path="/devices/:deviceId/diagnostics"
         element={
           <RequireAuth>
             <AppShell>
@@ -141,16 +169,7 @@ export default function App() {
         }
       />
 
-      {/* Alias so /diagnostics works too */}
-      <Route
-        path="/diagnostics"
-        element={
-          <RequireAuth>
-            <DiagnosticsRedirect />
-          </RequireAuth>
-        }
-      />
-
+      {/* ANALYTICS */}
       <Route
         path="/analytics"
         element={
@@ -158,6 +177,16 @@ export default function App() {
             <AppShell>
               <Analytics />
             </AppShell>
+          </RequireAuth>
+        }
+      />
+
+      {/* DIAGNOSTICS ALIAS */}
+      <Route
+        path="/diagnostics"
+        element={
+          <RequireAuth>
+            <DiagnosticsRedirect />
           </RequireAuth>
         }
       />

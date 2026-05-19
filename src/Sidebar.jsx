@@ -1,80 +1,79 @@
-import { NavLink, useLocation, useParams } from "react-router-dom"
+import { useState } from "react"
+import {
+  NavLink,
+  useLocation,
+} from "react-router-dom"
 
-// Fallback defaults (so sidebar links don't break)
-const DEFAULT_GROUP = "anesthesia-workstation"
-const DEFAULT_DEVICE = "AW-001"
+import {
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react"
 
 export default function Sidebar() {
+  const [deviceOpen, setDeviceOpen] =
+    useState(true)
+
   const location = useLocation()
-  const params = useParams()
 
-  // Try to infer current group/device from URL first,
-  // else fallback to localStorage, else default.
-  const groupId =
-    params.groupId || localStorage.getItem("selectedGroupId") || DEFAULT_GROUP
+  const deviceSectionActive =
+    location.pathname.startsWith("/devices")
 
-  const deviceId =
-    params.deviceId || localStorage.getItem("selectedDeviceId") || DEFAULT_DEVICE
-
-  // Exclusive active matching (prevents multiple items highlighted)
-  const isGroupsRoot = location.pathname === "/groups"
-
-  const isDevicesPage = new RegExp(`^/groups/${groupId}/devices$`).test(
-    location.pathname
-  )
-
-  const isLivePage = new RegExp(`^/groups/${groupId}/devices/[^/]+/live$`).test(
-    location.pathname
-  )
-
-  // ✅ NEW: history pages (both dashboard and single metric)
-  const isHistoryPage = new RegExp(
-    `^/groups/${groupId}/devices/[^/]+/history(/[^/]+)?$`
-  ).test(location.pathname)
-
-  const isDiagnosticsPage = new RegExp(
-    `^/groups/${groupId}/devices/[^/]+/diagnostics$`
-  ).test(location.pathname)
-
-  const isAnalyticsPage = location.pathname === "/analytics"
-
-  const cls = (on) => `sidebar-item ${on ? "active" : ""}`
+  const cls = ({ isActive }) =>
+    `enterprise-sidebar-item ${
+      isActive ? "active" : ""
+    }`
 
   return (
-    <div className="sidebar">
-      <NavLink to="/groups" className={cls(isGroupsRoot)}>
-        Device Groups
-      </NavLink>
+    <div className="enterprise-sidebar">
+      <div className="sidebar-logo">
+        THYNKURE
+      </div>
 
-      <NavLink to={`/groups/${groupId}/devices`} className={cls(isDevicesPage)}>
-        Devices
-      </NavLink>
-
+      {/* DASHBOARD */}
       <NavLink
-        to={`/groups/${groupId}/devices/${deviceId}/live`}
-        className={cls(isLivePage)}
+        to="/dashboard"
+        className={cls}
       >
-        Live Monitoring
+        Dashboard
       </NavLink>
 
-      {/* ✅ NEW */}
-      <NavLink
-        to={`/groups/${groupId}/devices/${deviceId}/history`}
-        className={cls(isHistoryPage)}
+      {/* DEVICE SECTION */}
+      <button
+        className={`sidebar-dropdown-btn ${
+          deviceOpen || deviceSectionActive
+            ? "open"
+            : ""
+        }`}
+        onClick={() =>
+          setDeviceOpen(!deviceOpen)
+        }
       >
-        Historical Trends
-      </NavLink>
+        <span>Device</span>
 
-      <NavLink
-        to={`/groups/${groupId}/devices/${deviceId}/diagnostics`}
-        className={cls(isDiagnosticsPage)}
-      >
-        Diagnostics
-      </NavLink>
+        {deviceOpen ? (
+          <ChevronDown size={16} />
+        ) : (
+          <ChevronRight size={16} />
+        )}
+      </button>
 
-      <NavLink to="/analytics" className={cls(isAnalyticsPage)}>
-        Analytics
-      </NavLink>
+      {deviceOpen && (
+        <div className="sidebar-submenu">
+          <NavLink
+            to="/devices"
+            className={cls}
+          >
+            Device List
+          </NavLink>
+
+          <NavLink
+            to="/devices/add"
+            className={cls}
+          >
+            Add Device
+          </NavLink>
+        </div>
+      )}
     </div>
   )
 }
