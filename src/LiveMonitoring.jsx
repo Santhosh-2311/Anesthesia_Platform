@@ -416,7 +416,7 @@ export default function LiveMonitoring({
             <div className="wave-placeholder yellow-wave"></div>
 
             <div className="wave-live-value">
-              ETCO₂: --
+              ETCO₂: {latest?.etco2?.toFixed(1) ?? "--"} mmHg
             </div>
           </div>
 
@@ -474,7 +474,7 @@ export default function LiveMonitoring({
             <div className="key-item">
               <span>ETCO₂</span>
               <strong>
-                --
+               {latest?.etco2?.toFixed(1) ?? "--"}
               </strong>
             </div>
 

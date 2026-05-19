@@ -104,6 +104,10 @@ export function adaptLatestTelemetry(payload) {
   teSet:
     toNumber(metrics["volumes.te_set_s"]),
 
+    // CO2
+etco2:
+  toNumber(metrics["co2.etco2_mmhg"]),
+
   // LINE PRESSURES
   o2_kpa:
     toNumber(metrics["lines.main_high_pressure.o2_kpa"]),
