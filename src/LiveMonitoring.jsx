@@ -6,6 +6,15 @@ import {
   Wifi,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import WaveformCanvas
+from "./components/waveforms/WaveformCanvas"
+
+import {
+  pressureBuffer,
+  flowBuffer,
+  etco2Buffer
+}
+from "./components/waveformStore"
 
 function formatDate(tsMs) {
   if (!tsMs) return "--"
@@ -166,10 +175,6 @@ export default function LiveMonitoring({
               Anesthesia Workstation
             </span>
 
-            <span>
-              ICU - OR 1
-            </span>
-
           </div>
 
         </div>
@@ -284,268 +289,347 @@ export default function LiveMonitoring({
       </div>
 
       {/* ================================================= */}
-      {/* OVERVIEW STRIP */}
-      {/* ================================================= */}
+{/* MAIN OVERVIEW LAYOUT                              */}
+{/* ================================================= */}
 
-      <div className="overview-strip">
+<div className="overview-main-layout">
 
-        <div className="strip-card">
-          <div className="strip-title">
-            Device Status
-          </div>
+  {/* ================================================= */}
+  {/* LEFT VERTICAL STRIP                              */}
+  {/* ================================================= */}
 
-          <div className="strip-value green">
-            {status?.isLive
-              ? "● Online"
-              : "● Offline"}
-          </div>
-        </div>
+  <div className="overview-left-strip">
 
-        <div className="strip-card">
-          <div className="strip-title">
-            Ventilator Mode
-          </div>
-
-          <div className="strip-value">
-            {latest?.mode ?? "--"}
-          </div>
-        </div>
-
-        <div className="strip-card">
-          <div className="strip-title">
-            Tidal Volume
-          </div>
-
-          <div className="strip-value green">
-            {latest?.vtSet ?? "--"} <span>mL</span>
-          </div>
-        </div>
-
-        <div className="strip-card">
-          <div className="strip-title">
-            Rate
-          </div>
-
-          <div className="strip-value blue">
-            {latest?.rrSet ?? "--"} <span>bpm</span>
-          </div>
-        </div>
-
-        <div className="strip-card">
-          <div className="strip-title">
-            PEEP
-          </div>
-
-          <div className="strip-value green">
-            {latest?.peep ?? "--"} <span>cmH₂O</span>
-          </div>
-        </div>
-
-        <div className="strip-card">
-          <div className="strip-title">
-            I:E Ratio
-          </div>
-
-          <div className="strip-value purple">
-            {latest?.ieSet ?? "--"}
-          </div>
-        </div>
-
-        <div className="overview-card gas-inline-card">
-
-          <div className="gas-left">
-
-            <div className="overview-label">
-              O₂ Supply
-            </div>
-
-            <div className="overview-value green">
-              {latest?.o2_kpa ?? "--"} <span>kPa</span>
-            </div>
-
-          </div>
-
-          <button className="inline-details-btn">
-            View Details
-          </button>
-
-        </div>
-
+    <div className="strip-card">
+      <div className="strip-title">
+        Ventilator Mode
       </div>
 
-      {/* ================================================= */}
-      {/* LOWER PANELS */}
-      {/* ================================================= */}
-
-      <div className="monitor-panels">
-
-        {/* WAVEFORMS */}
-        <div className="panel waveform-panel">
-
-          <h3>Waveforms</h3>
-
-          <div className="wave-chart">
-            <div className="wave-label">
-              Pressure (cmH₂O)
-            </div>
-
-            <div className="wave-placeholder green-wave"></div>
-
-            <div className="wave-live-value">
-              PIP: {latest?.pip ?? "--"} cmH₂O
-            </div>
-          </div>
-
-          <div className="wave-chart">
-            <div className="wave-label">
-              Flow (L/min)
-            </div>
-
-            <div className="wave-placeholder purple-wave"></div>
-
-            <div className="wave-live-value">
-              Flow: {latest?.totalFlow ?? "--"} L/min
-            </div>
-          </div>
-
-          <div className="wave-chart">
-            <div className="wave-label">
-              ETCO₂ (mmHg)
-            </div>
-
-            <div className="wave-placeholder yellow-wave"></div>
-
-            <div className="wave-live-value">
-              ETCO₂: {latest?.etco2?.toFixed(1) ?? "--"} mmHg
-            </div>
-          </div>
-
-        </div>
-
-        {/* KEY PARAMETERS */}
-        <div className="panel key-panel">
-
-          <h3>Key Parameters</h3>
-
-          <div className="key-grid">
-
-            <div className="key-item">
-              <span>Ppeak</span>
-              <strong>
-                {latest?.pip ?? "--"}
-              </strong>
-            </div>
-
-            <div className="key-item">
-              <span>Pmean</span>
-              <strong>
-                {latest?.peep ?? "--"}
-              </strong>
-            </div>
-
-            <div className="key-item">
-              <span>MV</span>
-              <strong>
-                {latest?.totalFlow ?? "--"}
-              </strong>
-            </div>
-
-            <div className="key-item">
-              <span>VTe</span>
-              <strong>
-                {latest?.vtMeasured ?? "--"}
-              </strong>
-            </div>
-
-            <div className="key-item">
-              <span>VTi</span>
-              <strong>
-                {latest?.vtSet ?? "--"}
-              </strong>
-            </div>
-
-            <div className="key-item">
-              <span>FiO₂</span>
-              <strong>
-                {latest?.fio2 ?? "--"}
-              </strong>
-            </div>
-
-            <div className="key-item">
-              <span>ETCO₂</span>
-              <strong>
-               {latest?.etco2?.toFixed(1) ?? "--"}
-              </strong>
-            </div>
-
-            <div className="key-item">
-              <span>Total Flow</span>
-              <strong>
-                {latest?.totalFlow ?? "--"}
-              </strong>
-            </div>
-
-            <div className="key-item">
-              <span>Rate</span>
-              <strong>
-                {latest?.rrSet ?? "--"}
-              </strong>
-            </div>
-
-          </div>
-        </div>
-
-        {/* GAS PANEL */}
-        <div className="panel gas-panel">
-
-          <h3>Gas (Rotameter)</h3>
-
-          <div className="gas-grid">
-
-            <div className="gas-column">
-
-              <div className="gas-name green">
-                O₂
-              </div>
-
-              <div className="gas-bar-wrap">
-                <div
-                  className="gas-bar green-bar"
-                  style={{
-                    height: `${Math.min(latest?.fio2 || 0, 100)}%`
-                  }}
-                ></div>
-              </div>
-
-              <div className="gas-reading">
-                {latest?.fio2 ?? "--"}
-              </div>
-            </div>
-
-            <div className="gas-column">
-
-              <div className="gas-name blue">
-                N₂O
-              </div>
-
-              <div className="gas-bar-wrap">
-                <div
-                  className="gas-bar blue-bar"
-                  style={{
-                    height: `${Math.min(latest?.n2o || 0, 100)}%`
-                  }}
-                ></div>
-              </div>
-
-              <div className="gas-reading">
-                {latest?.n2o ?? "--"}
-              </div>
-            </div>
-
-          </div>
-        </div>
-
+      <div className="strip-value">
+        {latest?.mode ?? "--"}
       </div>
     </div>
+
+    <div className="strip-card">
+      <div className="strip-title">
+        Tidal Volume
+      </div>
+
+      <div className="strip-value green">
+        {latest?.vtSet ?? "--"} <span>mL</span>
+      </div>
+    </div>
+
+    <div className="strip-card">
+      <div className="strip-title">
+        Rate
+      </div>
+
+      <div className="strip-value blue">
+        {latest?.rrSet ?? "--"} <span>bpm</span>
+      </div>
+    </div>
+
+    <div className="strip-card">
+      <div className="strip-title">
+        PEEP
+      </div>
+
+      <div className="strip-value green">
+        {latest?.peep ?? "--"} <span>cmH₂O</span>
+      </div>
+    </div>
+
+    <div className="strip-card">
+      <div className="strip-title">
+        I:E Ratio
+      </div>
+
+      <div className="strip-value purple">
+        {latest?.ieSet ?? "--"}
+      </div>
+    </div>
+
+    <div className="strip-card gas-inline-card">
+
+      <div className="gas-left">
+
+        <div className="metric-label">
+  O₂ Supply
+</div>
+
+<div className="metric-value green">
+  {latest?.o2_kpa ?? "--"} <span>kPa</span>
+</div>
+
+      </div>
+
+      <button className="inline-details-btn">
+        View Details
+      </button>
+
+    </div>
+
+  </div>
+
+  {/* ================================================= */}
+{/* WAVEFORM PANEL                                   */}
+{/* ================================================= */}
+
+<div className="panel waveform-panel">
+
+  <h3>Waveforms</h3>
+
+  {/* ============================================= */}
+  {/* PRESSURE WAVEFORM                            */}
+  {/* ============================================= */}
+
+  <div className="wave-chart">
+
+    <div className="wave-label">
+      Pressure (cmH₂O)
+    </div>
+
+    <WaveformCanvas
+      buffer={pressureBuffer}
+      color="#4dff88"
+      min={0}
+      max={40}
+    />
+
+    <div className="wave-live-value">
+      PIP: {latest?.pip ?? "--"} cmH₂O
+    </div>
+
+  </div>
+
+  {/* ============================================= */}
+  {/* FLOW WAVEFORM                                */}
+  {/* ============================================= */}
+
+  <div className="wave-chart">
+
+    <div className="wave-label">
+      Flow (L/min)
+    </div>
+
+    <WaveformCanvas
+      buffer={flowBuffer}
+      color="#b388ff"
+      min={-60}
+      max={80}
+    />
+
+    <div className="wave-live-value">
+      Flow: {latest?.totalFlow ?? "--"} L/min
+    </div>
+
+  </div>
+
+  {/* ============================================= */}
+  {/* ETCO2 WAVEFORM                               */}
+  {/* ============================================= */}
+
+  <div className="wave-chart">
+
+    <div className="wave-label">
+      ETCO₂ (mmHg)
+    </div>
+
+    <WaveformCanvas
+      buffer={etco2Buffer}
+      color="#ffd54f"
+      min={0}
+      max={50}
+    />
+
+    <div className="wave-live-value">
+      ETCO₂: {latest?.etco2?.toFixed(1) ?? "--"} mmHg
+    </div>
+
+  </div>
+
+</div>
+  {/* ================================================= */}
+  {/* GAS PANEL                                        */}
+  {/* ================================================= */}
+<div className="panel gas-panel">
+
+  <h3>Gas (Rotameter)</h3>
+
+  <div className="gas-section">
+
+  {/* O2 */}
+  <div className="gas-column">
+
+    <div className="gas-name o2">
+      O₂
+    </div>
+
+    <div className="tube-wrapper">
+
+      <div className="tube-scale">
+
+        {[7,6,5,4,3,2,1].map(v => (
+          <div
+            key={v}
+            className="scale-mark"
+          >
+            <span>{v}</span>
+            <div className="tick" />
+          </div>
+        ))}
+
+      </div>
+
+      <div className="tube">
+
+        <div
+          className="tube-fill o2-fill"
+          style={{
+            height: `${
+              (latest?.fio2 || 0)
+            }%`
+          }}
+        />
+
+      </div>
+
+    </div>
+
+    <div className="tube-value">
+      {latest?.o2Flow ?? 0}
+      <span>LPM</span>
+    </div>
+
+  </div>
+
+  {/* N2O */}
+  <div className="gas-column">
+
+    <div className="gas-name n2o">
+      N₂O
+    </div>
+
+    <div className="tube-wrapper">
+
+      <div className="tube-scale">
+
+        {[7,6,5,4,3,2,1].map(v => (
+          <div
+            key={v}
+            className="scale-mark"
+          >
+            <span>{v}</span>
+            <div className="tick" />
+          </div>
+        ))}
+
+      </div>
+
+      <div className="tube">
+
+        <div
+          className="tube-fill n2o-fill"
+          style={{
+            height: `${
+              (latest?.n2oFlow || 0)
+                * 10
+            }%`
+          }}
+        />
+
+      </div>
+
+    </div>
+
+    <div className="tube-value">
+      {latest?.n2oFlow ?? 0}
+      <span>LPM</span>
+      </div>
+
+    </div>
+
+  </div>
+  
+</div>
+
+  {/* ================================================= */}
+  {/* KEY PARAMETERS                                   */}
+  {/* ================================================= */}
+
+  <div className="panel key-panel">
+
+    <h3>Key Parameters</h3>
+
+    <div className="key-grid">
+
+      <div className="key-item">
+        <span>Ppeak</span>
+        <strong>
+          {latest?.pip ?? "--"}
+        </strong>
+      </div>
+
+      <div className="key-item">
+        <span>Pmean</span>
+        <strong>
+          {latest?.peep ?? "--"}
+        </strong>
+      </div>
+
+      <div className="key-item">
+        <span>MV</span>
+        <strong>
+          {latest?.totalFlow ?? "--"}
+        </strong>
+      </div>
+
+      <div className="key-item">
+        <span>VTe</span>
+        <strong>
+          {latest?.vtMeasured ?? "--"}
+        </strong>
+      </div>
+
+      <div className="key-item">
+        <span>VTi</span>
+        <strong>
+          {latest?.vtSet ?? "--"}
+        </strong>
+      </div>
+
+      <div className="key-item">
+        <span>FiO₂</span>
+        <strong>
+          {latest?.fio2 ?? "--"}
+        </strong>
+      </div>
+
+      <div className="key-item">
+        <span>ETCO₂</span>
+        <strong>
+          {latest?.etco2?.toFixed(1) ?? "--"}
+        </strong>
+      </div>
+
+      <div className="key-item">
+        <span>Total Flow</span>
+        <strong>
+          {latest?.totalFlow ?? "--"}
+        </strong>
+      </div>
+
+      <div className="key-item">
+        <span>Rate</span>
+        <strong>
+          {latest?.rrSet ?? "--"}
+        </strong>
+      </div>
+
+       </div>
+    </div>   
+</div>
+</div>
   )
 }

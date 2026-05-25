@@ -14,6 +14,17 @@ import {
   disconnectWebSocket
 }
 from "../services/wsClient"
+import {
+  appendSamples
+}
+from "../components/waveforms/waveformBuffer"
+
+import {
+  pressureBuffer,
+  flowBuffer,
+  etco2Buffer
+}
+from "../components/waveformStore"
 
 // ----------------------------------------------------
 // GLOBAL DEVICE STORES
@@ -219,7 +230,41 @@ export function useLiveTelemetry(
           )
 
         if (!normalized) return
+        // --------------------------------------
+// WAVEFORM STREAMING
+// --------------------------------------
 
+const rawWaveforms =
+  incomingData?.raw?.waveforms ||
+  incomingData?.waveforms
+
+if (rawWaveforms) {
+
+  if (rawWaveforms.pressure) {
+    appendSamples(
+      pressureBuffer,
+      rawWaveforms.pressure
+    )
+  }
+
+  if (rawWaveforms.flow) {
+    appendSamples(
+      flowBuffer,
+      rawWaveforms.flow
+    )
+  }
+
+  if (rawWaveforms.etco2) {
+    appendSamples(
+      etco2Buffer,
+      rawWaveforms.etco2
+    )
+  }
+}
+console.log(
+  "PRESSURE:",
+  pressureBuffer.samples.length
+)
         // --------------------------------------
         // IMPORTANT:
         // CREATE NEW REFERENCES
