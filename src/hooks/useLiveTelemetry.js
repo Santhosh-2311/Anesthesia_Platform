@@ -186,6 +186,15 @@ export function useLiveTelemetry(
 ) {
   const [tick, setTick] = useState(0)
 
+// Force periodic re-evaluation of live status
+useEffect(() => {
+  const id = setInterval(() => {
+    setTick((x) => x + 1)
+  }, 1000)
+
+  return () => clearInterval(id)
+}, [])
+
   useEffect(() => {
     if (!deviceBackendId) return
 
@@ -213,7 +222,7 @@ export function useLiveTelemetry(
     )
 
     // ------------------------------------------
-    // MQTT LIVE STREAM
+    // WebSocket LIVE STREAM
     // ------------------------------------------
 
     connectWebSocket((incomingData) => {
@@ -230,9 +239,10 @@ export function useLiveTelemetry(
           )
 
         if (!normalized) return
-        // --------------------------------------
-// WAVEFORM STREAMING
+        
 // --------------------------------------
+//   WAVEFORM STREAMING
+// -------------------------------------- 
 
 const rawWaveforms =
   incomingData?.raw?.waveforms ||

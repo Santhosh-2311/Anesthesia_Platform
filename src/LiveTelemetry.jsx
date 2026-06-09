@@ -31,8 +31,8 @@ export default function LiveTelemetry() {
   // Memoized backend device resolution
   // avoids unnecessary recalculations on re-render
   const backendId = useMemo(() => resolveBackendDeviceId(deviceId), [deviceId])
-  console.log("ROUTE DEVICE:", deviceId)
-console.log("BACKEND DEVICE:", backendId)
+  // console.log("ROUTE DEVICE:", deviceId)
+// console.log("BACKEND DEVICE:", backendId)
 
   // Initializes real-time telemetry polling hook
   // pollMs = fetch telemetry every 1 second
@@ -43,9 +43,9 @@ console.log("BACKEND DEVICE:", backendId)
       bufferSize: 120,
     })
 
-    console.log("LATEST:", latest)
-console.log("DATA:", data)
-console.log("STATUS:", status)
+    // console.log("LATEST:", latest)
+// console.log("DATA:", data)
+//console.log("STATUS:", status)
 
   return (
 

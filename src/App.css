@@ -1615,25 +1615,34 @@ color:#6f89a6;
 
 .gas-section{
   display:flex;
-  justify-content:space-evenly;
+
+  justify-content:space-around;
+
   align-items:flex-end;
+
   width:100%;
-  gap:15px;
+
+  gap:10px;
+
   margin-top:20px;
 }
 
 .gas-column{
   display:flex;
+
   flex-direction:column;
 
   align-items:center;
+
+  min-width:110px;
 }
 
 .gas-name{
-  font-size:30px;
+  font-size:25px;
+
   font-weight:700;
 
-  margin-bottom:14px;
+  margin-bottom:18px;
 }
 
 .o2{
@@ -1649,13 +1658,14 @@ color:#6f89a6;
 
   align-items:flex-end;
 
-  gap:10px;
+  gap:14px;
 }
 
 .tube-scale{
-  height:170px;
+  height:190px;
 
   display:flex;
+
   flex-direction:column;
 
   justify-content:space-between;
@@ -1666,33 +1676,36 @@ color:#6f89a6;
 
   align-items:center;
 
-  gap:6px;
+  gap:8px;
 
   color:white;
 
-  font-size:13px;
-  font-weight:500;
+  font-size:12px;
+
+  font-weight:600;
 
   opacity:.9;
 }
 
 .tick{
-  width:12px;
-  height:1px;
+  width:10px;
+
+  height:2px;
 
   background:
-    rgba(255,255,255,.6);
+    rgba(255,255,255,.65);
 }
 
 .tube{
   position:relative;
 
-  width:44px;
-  height:170px;
+  width:40px;
+
+  height:200px;
 
   overflow:hidden;
 
-  border-radius:12px;
+  border-radius:14px;
 
   background:
     linear-gradient(
@@ -1745,13 +1758,14 @@ color:#6f89a6;
 }
 
 .tube-value{
-  margin-top:14px;
+  margin-top:16px;
 
   text-align:center;
 
   color:white;
 
-  font-size:16px;
+  font-size:20px;
+
   font-weight:700;
 
   line-height:1.1;
@@ -1760,13 +1774,61 @@ color:#6f89a6;
 .tube-value span{
   display:block;
 
-  margin-top:2px;
+  margin-top:4px;
 
   font-size:13px;
 
   opacity:.8;
 
   letter-spacing:.5px;
+}
+
+.gas-toggle{
+  display:flex;
+
+  justify-content:center;
+
+  gap:10px;
+
+  margin-top:24px;
+}
+
+.gas-toggle button{
+  min-width:60px;
+
+  background:#0d1f33;
+
+  color:#8ea3b8;
+
+  border:1px solid #1f3a57;
+
+  border-radius:10px;
+
+  padding:8px 14px;
+
+  cursor:pointer;
+
+  transition:.2s;
+}
+
+.gas-toggle button.active {
+  background: #183a5a;
+
+  color: white;
+
+  border-color: #3d8cff;
+}
+
+.air {
+  color: #7ec8ff;
+}
+
+.air-fill {
+  background: linear-gradient(
+    to top,
+    #66c7ff,
+    #b8ebff
+  );
 }
 
 
@@ -1807,6 +1869,7 @@ color:#6f89a6;
 
   color:#38f29b;
 }
+
 .gas-panel{
   background:
     linear-gradient(
@@ -1816,14 +1879,22 @@ color:#6f89a6;
     );
 
   border-radius:24px;
-  padding:20px 16px;
-  width:260px;
-  min-width: 260px;
+
+  padding:20px 20px;
+
+  width:250px;
+
+  min-width:250px;
+
   overflow:hidden;
+
   display:flex;
+
   flex-direction:column;
+
   justify-content:flex-start;
 }
+
 /* =========================================================
 RESPONSIVE
 ========================================================= */

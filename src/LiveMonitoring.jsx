@@ -5,6 +5,7 @@ import {
   UserCircle2,
   Wifi,
 } from "lucide-react"
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import WaveformCanvas
 from "./components/waveforms/WaveformCanvas"
@@ -64,22 +65,50 @@ export default function LiveMonitoring({
   const runtime =
     formatRuntime(latest?.uptimeMs)
 
-  console.log("THIS IS THE ACTIVE COMPONENT")
-
-  console.log("LIVE MONITORING latest:", latest)
-
-  console.log("LIVE MONITORING telemetry:", telemetry)
-
-  console.log("LIVE MONITORING status:", status)
-
   const navigate = useNavigate()
+
+  // Gas Panel //
+
+const [secondaryGas, setSecondaryGas] =
+  useState("n2o")
+
+const MAX_FLOW = 10
+const MIN_FLOW = 0
+
+const o2Flow =
+  latest?.o2Flow ?? 0
+
+const secondaryFlow =
+  secondaryGas === "n2o"
+    ? latest?.n2oFlow ?? 0
+    : latest?.airFlow ?? 0
+
+function flowToPercent(flow) {
+
+  const clamped =
+    Math.max(
+      MIN_FLOW,
+      Math.min(flow, MAX_FLOW)
+    )
+
+  return (
+    (clamped - MIN_FLOW) /
+    (MAX_FLOW - MIN_FLOW)
+  ) * 100
+}
+
+const o2Height =
+  flowToPercent(o2Flow)
+
+const secondaryHeight =
+  flowToPercent(secondaryFlow)
 
   return (
     <div className="live-monitor-page">
 
-      {/* ================================================= */}
-      {/* TOP ACTION BAR */}
-      {/* ================================================= */}
+  {/* ================================================= */}
+  {/* TOP ACTION BAR */}
+  {/* ================================================= */}
 
       <div className="workspace-topbar">
 
@@ -110,7 +139,18 @@ export default function LiveMonitoring({
               </div>
             </div>
 
-            <span className="chip-close">
+           <span
+              className="chip-close"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+
+                localStorage.removeItem("selectedDeviceId")
+                localStorage.removeItem("selectedGroupId")
+
+                navigate("/devices")
+              }}
+            >
               ×
             </span>
 
@@ -163,8 +203,12 @@ export default function LiveMonitoring({
               {latest?.deviceId || "AW-1001"}
             </h1>
 
-            <div className="device-online-badge">
-              {status?.isLive ? "Online" : "Offline"}
+          <div
+              className={`device-status-badge ${
+                isOnline ? "online" : "offline"
+              }`}
+            >
+              {isOnline ? "Online" : "Offline"}
             </div>
 
           </div>
@@ -288,7 +332,7 @@ export default function LiveMonitoring({
         </div>
       </div>
 
-      {/* ================================================= */}
+{/* ================================================= */}
 {/* MAIN OVERVIEW LAYOUT                              */}
 {/* ================================================= */}
 
@@ -372,7 +416,7 @@ export default function LiveMonitoring({
 
   </div>
 
-  {/* ================================================= */}
+{/* ================================================= */}
 {/* WAVEFORM PANEL                                   */}
 {/* ================================================= */}
 
@@ -451,107 +495,145 @@ export default function LiveMonitoring({
 
 </div>
   {/* ================================================= */}
-  {/* GAS PANEL                                        */}
-  {/* ================================================= */}
+{/* GAS PANEL                                        */}
+{/* ================================================= */}
+
 <div className="panel gas-panel">
 
   <h3>Gas (Rotameter)</h3>
 
   <div className="gas-section">
 
-  {/* O2 */}
-  <div className="gas-column">
+    {/* OXYGEN */}
 
-    <div className="gas-name o2">
-      O₂
-    </div>
+    <div className="gas-column">
 
-    <div className="tube-wrapper">
+      <div className="gas-name o2">
+        O₂
+      </div>
 
-      <div className="tube-scale">
+      <div className="tube-wrapper">
 
-        {[7,6,5,4,3,2,1].map(v => (
+        <div className="tube-scale">
+          {[10,9,8,7,6,5,4,3,2,1,0].map(v => (
+            <div
+              key={v}
+              className="scale-mark"
+            >
+              <span>{v}</span>
+              <div className="tick" />
+            </div>
+          ))}
+        </div>
+
+        <div className="tube">
+
           <div
-            key={v}
-            className="scale-mark"
-          >
-            <span>{v}</span>
-            <div className="tick" />
-          </div>
-        ))}
+            className="tube-fill o2-fill"
+            style={{
+              height: `${o2Height}%`
+            }}
+          />
+
+        </div>
 
       </div>
 
-      <div className="tube">
-
-        <div
-          className="tube-fill o2-fill"
-          style={{
-            height: `${
-              (latest?.fio2 || 0)
-            }%`
-          }}
-        />
-
+      <div className="tube-value">
+        {o2Flow.toFixed(2)}
+        <span>LPM</span>
       </div>
 
     </div>
 
-    <div className="tube-value">
-      {latest?.o2Flow ?? 0}
-      <span>LPM</span>
+    {/* SECONDARY GAS */}
+
+    <div className="gas-column">
+
+      <div
+        className={`gas-name ${
+          secondaryGas === "n2o"
+            ? "n2o"
+            : "air"
+        }`}
+      >
+        {secondaryGas === "n2o"
+          ? "N₂O"
+          : "AIR"}
+      </div>
+
+      <div className="tube-wrapper">
+
+        <div className="tube-scale">
+          {[10,9,8,7,6,5,4,3,2,1,0].map(v => (
+            <div
+              key={v}
+              className="scale-mark"
+            >
+              <span>{v}</span>
+              <div className="tick" />
+            </div>
+          ))}
+        </div>
+
+        <div className="tube">
+
+          <div
+            className={`tube-fill ${
+              secondaryGas === "n2o"
+                ? "n2o-fill"
+                : "air-fill"
+            }`}
+            style={{
+              height: `${secondaryHeight}%`
+            }}
+          />
+
+        </div>
+
+      </div>
+
+      <div className="tube-value">
+        {secondaryFlow.toFixed(2)}
+        <span>LPM</span>
+      </div>
+
     </div>
 
   </div>
 
-  {/* N2O */}
-  <div className="gas-column">
+  {/* GAS SELECTOR */}
 
-    <div className="gas-name n2o">
+  <div className="gas-toggle">
+
+    <button
+      className={
+        secondaryGas === "n2o"
+          ? "active"
+          : ""
+      }
+      onClick={() =>
+        setSecondaryGas("n2o")
+      }
+    >
       N₂O
-    </div>
+    </button>
 
-    <div className="tube-wrapper">
-
-      <div className="tube-scale">
-
-        {[7,6,5,4,3,2,1].map(v => (
-          <div
-            key={v}
-            className="scale-mark"
-          >
-            <span>{v}</span>
-            <div className="tick" />
-          </div>
-        ))}
-
-      </div>
-
-      <div className="tube">
-
-        <div
-          className="tube-fill n2o-fill"
-          style={{
-            height: `${
-              (latest?.n2oFlow || 0)
-                * 10
-            }%`
-          }}
-        />
-
-      </div>
-
-    </div>
-
-    <div className="tube-value">
-      {latest?.n2oFlow ?? 0}
-      <span>LPM</span>
-      </div>
-
-    </div>
+    <button
+      className={
+        secondaryGas === "air"
+          ? "active"
+          : ""
+      }
+      onClick={() =>
+        setSecondaryGas("air")
+      }
+    >
+      AIR
+    </button>
 
   </div>
-  
+
 </div>
 
   {/* ================================================= */}
