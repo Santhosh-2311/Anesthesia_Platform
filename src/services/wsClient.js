@@ -16,6 +16,10 @@ export function connectWebSocket(onMessage) {
     console.log(
       "WebSocket connected"
     )
+    console.log(
+  "WS RECEIVED",
+  new Date().toLocaleTimeString()
+)
   }
 
   socket.onmessage = (event) => {

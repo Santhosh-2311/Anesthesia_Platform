@@ -173,7 +173,7 @@ const secondaryHeight =
 
       </div>
 
-      {/* ================================================= */}
+{/* ================================================= */}
 {/* MAIN DEVICE PANEL */}
 {/* ================================================= */}
 
@@ -442,31 +442,43 @@ const secondaryHeight =
     />
 
     <div className="wave-live-value">
-      PIP: {latest?.pip ?? "--"} cmH₂O
-    </div>
+  Pressure: {
+    pressureBuffer.samples.length
+      ? pressureBuffer.samples[
+          pressureBuffer.samples.length - 1
+        ].toFixed(1)
+      : "--"
+  } cmH₂O
+</div>
 
   </div>
 
   {/* ============================================= */}
-  {/* FLOW WAVEFORM                                */}
+  {/* Volume WAVEFORM                                */}
   {/* ============================================= */}
 
   <div className="wave-chart">
 
     <div className="wave-label">
-      Flow (L/min)
-    </div>
+  Volume (mL)
+</div>
 
-    <WaveformCanvas
-      buffer={flowBuffer}
-      color="#b388ff"
-      min={-60}
-      max={80}
-    />
+   <WaveformCanvas
+  buffer={flowBuffer}
+  color="#b388ff"
+  min={0}
+  max={600}
+/>
 
-    <div className="wave-live-value">
-      Flow: {latest?.totalFlow ?? "--"} L/min
-    </div>
+   <div className="wave-live-value">
+  Volume: {
+    flowBuffer.samples.length
+      ? flowBuffer.samples[
+          flowBuffer.samples.length - 1
+        ].toFixed(0)
+      : "--"
+  } mL
+</div>
 
   </div>
 

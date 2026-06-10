@@ -244,37 +244,73 @@ useEffect(() => {
 //   WAVEFORM STREAMING
 // -------------------------------------- 
 
-const rawWaveforms =
-  incomingData?.raw?.waveforms ||
-  incomingData?.waveforms
+const wf =
+  incomingData?.waveform
 
-if (rawWaveforms) {
+if (wf) {
+  const now = performance.now()
 
-  if (rawWaveforms.pressure) {
-    appendSamples(
-      pressureBuffer,
-      rawWaveforms.pressure
-    )
-  }
+if (window.lastSampleTime) {
 
-  if (rawWaveforms.flow) {
-    appendSamples(
-      flowBuffer,
-      rawWaveforms.flow
-    )
-  }
-
-  if (rawWaveforms.etco2) {
-    appendSamples(
-      etco2Buffer,
-      rawWaveforms.etco2
-    )
-  }
+  console.log(
+    "Sample gap:",
+    (
+      now -
+      window.lastSampleTime
+    ).toFixed(1),
+    "ms"
+  )
 }
-console.log(
-  "PRESSURE:",
-  pressureBuffer.samples.length
+
+window.lastSampleTime = now
+
+  appendSamples(
+    pressureBuffer,
+    [
+      wf.pressure_cmh2o ?? 0
+    ]
+  )
+
+  appendSamples(
+    flowBuffer,
+    [
+      wf.volume_ml ?? 0
+      
+    ]
+  
+  )
+
+  appendSamples(
+    etco2Buffer,
+    [
+      wf.etco2_mmhg ?? 0
+    ]
+  )
+
+  console.log(
+    "PRESSURE BUFFER:",
+    pressureBuffer.samples.length
+  )
+
+  console.log(
+    "FLOW BUFFER:",
+    flowBuffer.samples.length
+  )
+
+  console.log(
+    "ETCO2 BUFFER:",
+    etco2Buffer.samples.length
+  )
+  console.log(
+  "VOLUME SAMPLE:",
+  wf.volume_ml
 )
+console.log(
+  "VOLUME BUFFER MIN:",
+  Math.min(...flowBuffer.samples)
+)
+}
+
         // --------------------------------------
         // IMPORTANT:
         // CREATE NEW REFERENCES

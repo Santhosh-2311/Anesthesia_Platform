@@ -10,11 +10,11 @@ function drawGrid(
 ) {
 
   ctx.strokeStyle =
-    "rgba(255,255,255,0.05)"
+    "rgba(255,255,255,0.025)"
 
   ctx.lineWidth = 1
 
-  const gap = 32
+  const gap = 25
 
   // Vertical grid
   for (
@@ -82,6 +82,18 @@ export default function WaveformCanvas({
 
       const height =
         canvas.clientHeight
+        const plotTop = 6
+
+const plotBottom = height - 18
+
+const plotLeft = 44
+const plotRight = width - 10
+
+const plotWidth =
+  plotRight - plotLeft
+
+const plotHeight =
+  plotBottom - plotTop
 
       // Retina scaling
       const dpr =
@@ -133,9 +145,15 @@ ctx.lineWidth = 1
 // Y axis
 ctx.beginPath()
 
-ctx.moveTo(40, 8)
+ctx.moveTo(
+  40,
+  plotTop
+)
 
-ctx.lineTo(40, height - 24)
+ctx.lineTo(
+  40,
+  plotBottom
+)
 
 ctx.stroke()
 
@@ -144,12 +162,12 @@ ctx.beginPath()
 
 ctx.moveTo(
   40,
-  height - 24
+  plotBottom
 )
 
 ctx.lineTo(
   width - 8,
-  height - 24
+  plotBottom
 )
 
 ctx.stroke()
@@ -186,7 +204,7 @@ ctx.fillText(
 ctx.fillText(
   min,
   34,
-  height - 28
+  plotBottom + 4
 )
 
 // =================================================
@@ -210,13 +228,13 @@ for (
       xSteps
     ) * i
 
-  const totalSeconds = 5
+  const visibleSeconds = 5
 
 const label =
   (
-    (totalSeconds / xSteps) *
+    (visibleSeconds / xSteps) *
     i
-  ).toFixed(0)
+  ).toFixed(1)
 
   ctx.fillText(
     label,
@@ -233,107 +251,116 @@ const label =
 
       ctx.strokeStyle =
         color
-
-      ctx.lineWidth = 2
+      ctx.lineCap = "round"
+      ctx.lineJoin = "round"
+      ctx.lineWidth = 2.5
 
       // IMPORTANT FIX
-      const samples =
-        buffer?.samples || []
+const samples =
+  buffer?.samples || []
 
-      // Prevent empty render
-      if (samples.length < 2) {
+console.log(
+  "MIN BUFFER:",
+  Math.min(...samples),
+  "MAX BUFFER:",
+  Math.max(...samples)
+)
 
-        animationId =
-          requestAnimationFrame(
-            render
-          )
+// Prevent empty render
+if (samples.length < 2) {
 
-        return
-      }
+  animationId =
+    requestAnimationFrame(
+      render
+    )
 
-      const visibleSamples =
-  Math.min(
-    samples.length,
-    width
-  )
-
-const startIndex =
+  return
+}
+      const samplesPerSecond = 20
+      const visibleSeconds = 5
+      const visibleSamples = samplesPerSecond * visibleSeconds
+      const startIndex =
   Math.max(
     0,
     samples.length -
       visibleSamples
   )
 
-const plotLeft = 44
-const plotRight = width - 10
-
-const plotTop = 10
-const plotBottom = height - 24
-
-const plotWidth =
-  plotRight - plotLeft
-
-const plotHeight =
-  plotBottom - plotTop
-
 for (
   let x = 0;
   x < visibleSamples;
   x++
-)
- {
+) {
+
+  const sampleIndex =
+    startIndex + x
+
+  if (
+    sampleIndex >=
+    samples.length
+  ) {
+    break
+  }
 
   const value =
-    samples[
-      startIndex + x
-    ]
+    samples[sampleIndex]
 
-        const normalized =
-  (value - min) /
+if (value < 0) {
+  console.log(
+    "NEGATIVE VALUE:",
+    value
+  )
+}
+  const safeValue =
+  Math.max(
+    min,
+    Math.min(
+      max,
+      value
+    )
+  )
+
+const normalized =
+  (safeValue - min) /
   (max - min)
 
-// Add top/bottom padding
-const padding = 12
 
-const drawableHeight =
-  height - padding * 2
+  let y =
+    plotBottom -
+    normalized *
+      plotHeight
 
-const plotTop = 12
-const plotBottom = height - 24
-
-const plotHeight =
-  plotBottom - plotTop
-
-let y =
-  plotBottom -
-  normalized *
-    plotHeight
-
-// Prevent overflow
-y = Math.max(
-  plotTop,
-  Math.min(
-    plotBottom,
-    y
+  // Keep waveform inside graph area
+  y = Math.max(
+    plotTop,
+    Math.min(
+      plotBottom,
+      y
+    )
   )
-)
 
-       const drawX =
-  plotLeft +
-  (x / visibleSamples) *
-    plotWidth
+  const drawX =
+    plotLeft +
+    (x / visibleSamples) *
+      plotWidth
 
-if (x === 0) {
+  if (x === 0) {
 
-  ctx.moveTo(drawX, y)
+    ctx.moveTo(
+      drawX,
+      y
+    )
 
-} else {
+  } else {
 
-  ctx.lineTo(drawX, y)
+    ctx.lineTo(
+      drawX,
+      y
+    )
+  }
 }
-      }
 
-      ctx.stroke()
+ctx.stroke()
 
       animationId =
         requestAnimationFrame(
@@ -358,7 +385,7 @@ if (x === 0) {
       ref={canvasRef}
       style={{
         width: "100%",
-        height: "120px",
+        height: "150px",
         display: "block",
         borderRadius: "12px",
       }}
