@@ -228,7 +228,7 @@ for (
       xSteps
     ) * i
 
-  const visibleSeconds = 5
+  const visibleSeconds = 15
 
 const label =
   (
@@ -277,7 +277,7 @@ if (samples.length < 2) {
   return
 }
       const samplesPerSecond = 20
-      const visibleSeconds = 5
+      const visibleSeconds = 15
       const visibleSamples = samplesPerSecond * visibleSeconds
       const startIndex =
   Math.max(

@@ -403,8 +403,11 @@ const secondaryHeight =
       </div>
 
       <div className="strip-value purple">
-        {latest?.ieSet ?? "--"}
-      </div>
+  {latest?.ieSet
+    ? latest.ieSet.replace(".0", "")
+    : "--"}
+</div>
+
     </div>
 
     <div className="strip-card gas-inline-card">
@@ -416,7 +419,10 @@ const secondaryHeight =
 </div>
 
 <div className="metric-value green">
-  {latest?.o2Psi ?? "--"} <span>psi</span>
+  {latest?.o2Psi != null
+    ? Math.round(latest.o2Psi)
+    : "--"}{" "}
+  <span>psi</span>
 </div>
 
       </div>
