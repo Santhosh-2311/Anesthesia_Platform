@@ -404,7 +404,10 @@ const secondaryHeight =
 
       <div className="strip-value purple">
   {latest?.ieSet
-    ? latest.ieSet.replace(".0", "")
+    ? latest.ieSet.replace(
+        /:(\d+)\.\d+/,
+        ":$1"
+      )
     : "--"}
 </div>
 
