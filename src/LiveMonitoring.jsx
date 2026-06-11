@@ -78,10 +78,23 @@ const MIN_FLOW = 0
 const o2Flow =
   latest?.o2Flow ?? 0
 
+const o2SetFlow =
+  latest?.o2SetFlow ?? 0
+
+const n2oSetFlow =
+  latest?.n2oSetFlow ?? 0
+
+const airSetFlow =
+  latest?.airSetFlow ?? 0
+
 const secondaryFlow =
   secondaryGas === "n2o"
     ? latest?.n2oFlow ?? 0
     : latest?.airFlow ?? 0
+    const secondarySetFlow =
+  secondaryGas === "n2o"
+    ? latest?.n2oSetFlow ?? 0
+    : latest?.airSetFlow ?? 0
 
 function flowToPercent(flow) {
 
@@ -403,7 +416,7 @@ const secondaryHeight =
 </div>
 
 <div className="metric-value green">
-  {latest?.o2_kpa ?? "--"} <span>kPa</span>
+  {latest?.o2Psi ?? "--"} <span>psi</span>
 </div>
 
       </div>
@@ -552,9 +565,9 @@ const secondaryHeight =
       </div>
 
       <div className="tube-value">
-        {o2Flow.toFixed(2)}
-        <span>LPM</span>
-      </div>
+  {o2SetFlow.toFixed(2)}
+  <span>LPM</span>
+</div>
 
     </div>
 
@@ -606,9 +619,9 @@ const secondaryHeight =
       </div>
 
       <div className="tube-value">
-        {secondaryFlow.toFixed(2)}
-        <span>LPM</span>
-      </div>
+  {secondarySetFlow.toFixed(2)}
+  <span>LPM</span>
+</div>
 
     </div>
 

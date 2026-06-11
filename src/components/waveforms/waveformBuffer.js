@@ -1,18 +1,26 @@
 // src/components/waveforms/waveformBuffer.js
 
 export function createWaveBuffer(
-  maxSamples = 4096
+  maxSamples = 1096
 ) {
   return {
     samples: [],
     maxSamples,
   }
+    console.warn(
+    "BUFFER CREATED",
+    new Date().toISOString()
+  )
 }
 
 export function appendSamples(
   buffer,
   incomingSamples
 ) {
+  console.log(
+  "BUFFER LENGTH:",
+  buffer.samples.length
+)
   if (
     !buffer ||
     !incomingSamples ||

@@ -155,6 +155,32 @@ export function adaptLatestTelemetry(payload) {
         metrics["flow.total_lpm"]
       ),
 
+      // ---------- ROTAMETER SET VALUES ----------
+
+o2SetFlow:
+  toNumber(
+    flow?.o2_set_lpm ??
+    metrics["flow.o2_set_lpm"]
+  ),
+
+airSetFlow:
+  toNumber(
+    flow?.air_set_lpm ??
+    metrics["flow.air_set_lpm"]
+  ),
+
+n2oSetFlow:
+  toNumber(
+    flow?.n2o_set_lpm ??
+    metrics["flow.n2o_set_lpm"]
+  ),
+
+ventFlow:
+  toNumber(
+    flow?.vent_lpm ??
+    metrics["flow.vent_lpm"]
+  ),
+
     // ------------- VENTILATOR -------------
 
     mode:
@@ -225,23 +251,23 @@ export function adaptLatestTelemetry(payload) {
 
     // ----------- LINE PRESSURES -----------
 
-    o2_kpa:
-      toNumber(
-        linePressures?.o2_kpa ??
-        metrics["lines.main_high_pressure.o2_kpa"]
-      ),
+   o2Psi:
+  toNumber(
+    linePressures?.o2_psi ??
+    metrics["lines.main_high_pressure.o2_psi"]
+  ),
 
-    n2_kpa:
-      toNumber(
-        linePressures?.n2_kpa ??
-        metrics["lines.main_high_pressure.n2_kpa"]
-      ),
+n2oPsi:
+  toNumber(
+    linePressures?.n2o_psi ??
+    metrics["lines.main_high_pressure.n2o_psi"]
+  ),
 
-    air_kpa:
-      toNumber(
-        linePressures?.air_kpa ??
-        metrics["lines.main_high_pressure.air_kpa"]
-      ),
+airPsi:
+  toNumber(
+    linePressures?.air_psi ??
+    metrics["lines.main_high_pressure.air_psi"]
+  ),
   }
 
   console.log("ADAPTED:", telemetry)

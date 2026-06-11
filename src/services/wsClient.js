@@ -22,33 +22,47 @@ export function connectWebSocket(onMessage) {
 )
   }
 
-  socket.onmessage = (event) => {
+socket.onmessage = (event) => {
 
-    try {
+  console.log(
+    "RAW WS EVENT:",
+    event.data
+  )
 
-      const parsed =
-        JSON.parse(event.data)
+  try {
+
+    const parsed =
+      JSON.parse(event.data)
+
+    console.log(
+      "PARSED WS:",
+      parsed
+    )
+
+    console.log(
+      "WS TYPE:",
+      parsed.type
+    )
+
+    if (
+      parsed.type === "telemetry"
+    ) {
 
       console.log(
-        "WS MESSAGE:",
-        parsed
+        "TELEMETRY FORWARDED"
       )
 
-      if (
-        parsed.type === "telemetry"
-      ) {
-
-        onMessage(parsed.data)
-      }
-
-    } catch (err) {
-
-      console.error(
-        "WS parse error:",
-        err
-      )
+      onMessage(parsed.data)
     }
+
+  } catch (err) {
+
+    console.error(
+      "WS parse error:",
+      err
+    )
   }
+}
 
   socket.onclose = () => {
 

@@ -225,20 +225,89 @@ useEffect(() => {
     // WebSocket LIVE STREAM
     // ------------------------------------------
 
-    connectWebSocket((incomingData) => {
-      try {
+   connectWebSocket((incomingData) => {
+  try {
 
-        console.log(
-          "MQTT LIVE DATA:",
-          incomingData
-        )
+    console.log(
+      "========================"
+    )
 
-        const normalized =
-          adaptLatestTelemetry(
-            incomingData
-          )
+    console.log(
+      "INCOMING DATA:",
+      incomingData
+    )
 
-        if (!normalized) return
+    console.log(
+      "MODE RECEIVED:",
+      incomingData?.ventilator?.mode,
+      incomingData?.metrics?.["ventilator.mode"]
+    )
+
+    console.log(
+      "TIMESTAMP:",
+      incomingData?.ts
+    )
+
+    window.lastMode ??= null
+
+    if (
+  incomingData?.ventilator?.mode === "PING"
+) {
+  console.error(
+    "FOUND PING PACKET",
+    incomingData
+  )
+}
+
+const currentMode =
+  incomingData?.ventilator?.mode ??
+  incomingData?.metrics?.["ventilator.mode"]
+
+if (
+  window.lastMode &&
+  currentMode !== window.lastMode
+) {
+  console.log(
+    "MODE CHANGED:",
+    window.lastMode,
+    "=>",
+    currentMode,
+    incomingData
+  )
+
+  debugger
+}
+
+window.lastMode = currentMode
+
+    const normalized =
+      adaptLatestTelemetry(
+        incomingData
+      )
+
+      if (
+  normalized &&
+  (
+    normalized.mode == null ||
+    normalized.vtSet == null ||
+    normalized.rrSet == null
+  )
+) {
+  console.error(
+    "BAD TELEMETRY",
+    incomingData,
+    normalized
+  )
+
+  debugger
+}
+
+    console.log(
+      "NORMALIZED:",
+      normalized
+    )
+
+    if (!normalized) return
         
 // --------------------------------------
 //   WAVEFORM STREAMING

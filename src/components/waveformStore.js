@@ -9,7 +9,7 @@ export const pressureBuffer =
   createWaveBuffer(4096)
 
 export const flowBuffer =
-  createWaveBuffer(4096)
+  createWaveBuffer(8096)
 
 export const etco2Buffer =
-  createWaveBuffer(4096)
+  createWaveBuffer(8096)
