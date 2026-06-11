@@ -72,9 +72,6 @@ export default function LiveMonitoring({
 const [secondaryGas, setSecondaryGas] =
   useState("n2o")
 
-const MAX_FLOW = 10
-const MIN_FLOW = 0
-
 const o2Flow =
   latest?.o2Flow ?? 0
 
@@ -91,34 +88,103 @@ const secondaryFlow =
   secondaryGas === "n2o"
     ? latest?.n2oFlow ?? 0
     : latest?.airFlow ?? 0
-    const secondarySetFlow =
+
+const secondarySetFlow =
   secondaryGas === "n2o"
     ? latest?.n2oSetFlow ?? 0
     : latest?.airSetFlow ?? 0
 
-function flowToPercent(flow) {
+// ------------------------------------
+// DYNAMIC SCALE HELPERS
+// ------------------------------------
 
+function getScaleMax(
+  setFlow
+) {
+  if (setFlow <= 1) return 1
+  if (setFlow <= 5) return 5
+  return 15
+}
+
+function flowToPercent(
+  actualFlow,
+  scaleMax
+) {
   const clamped =
     Math.max(
-      MIN_FLOW,
-      Math.min(flow, MAX_FLOW)
+      0,
+      Math.min(
+        actualFlow,
+        scaleMax
+      )
     )
 
   return (
-    (clamped - MIN_FLOW) /
-    (MAX_FLOW - MIN_FLOW)
+    clamped / scaleMax
   ) * 100
 }
 
+function createScaleLabels(
+  scaleMax
+) {
+  if (scaleMax === 1) {
+    return [1, 0.8, 0.6, 0.4, 0.2, 0]
+  }
+
+  if (scaleMax === 5) {
+    return [5, 4, 3, 2, 1, 0]
+  }
+
+  return [15, 12, 9, 6, 3, 0]
+}
+
+// ------------------------------------
+// OXYGEN SCALE — driven by set value
+// ------------------------------------
+
+const o2ScaleMax =
+  getScaleMax(
+    o2SetFlow
+  )
+
+const o2ScaleLabels =
+  createScaleLabels(
+    o2ScaleMax
+  )
+
+// ------------------------------------
+// SECONDARY SCALE — driven by set value
+// ------------------------------------
+
+const secondaryScaleMax =
+  getScaleMax(
+    secondarySetFlow
+  )
+
+const secondaryScaleLabels =
+  createScaleLabels(
+    secondaryScaleMax
+  )
+
+// ------------------------------------
+// TUBE HEIGHTS
+// ------------------------------------
+
 const o2Height =
-  flowToPercent(o2Flow)
+  flowToPercent(
+    o2Flow,
+    o2ScaleMax
+  )
 
 const secondaryHeight =
-  flowToPercent(secondaryFlow)
+  flowToPercent(
+    secondaryFlow,
+    secondaryScaleMax
+  )
 
-  return (
-    <div className="live-monitor-page">
-
+return (
+  <div className="live-monitor-page">
+    
   {/* ================================================= */}
   {/* TOP ACTION BAR */}
   {/* ================================================= */}
@@ -549,7 +615,7 @@ const secondaryHeight =
       <div className="tube-wrapper">
 
         <div className="tube-scale">
-          {[10,9,8,7,6,5,4,3,2,1,0].map(v => (
+          {o2ScaleLabels.map(v => (
             <div
               key={v}
               className="scale-mark"
@@ -599,7 +665,7 @@ const secondaryHeight =
       <div className="tube-wrapper">
 
         <div className="tube-scale">
-          {[10,9,8,7,6,5,4,3,2,1,0].map(v => (
+          {secondaryScaleLabels.map(v => (
             <div
               key={v}
               className="scale-mark"
