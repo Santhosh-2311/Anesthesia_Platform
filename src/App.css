@@ -3121,4 +3121,154 @@ height: 190px;
   line-height:1.1;
 }
 
+/* =========================================================
+   LOGIN PAGE
+   ========================================================= */
+
+.loginPage {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: radial-gradient(circle at 50% 25%, #102338 0%, #07111f 70%, #040910 100%);
+  box-sizing: border-box;
+}
+
+.loginCard {
+  width: 100%;
+  max-width: 420px;
+  background: #0d1b2a;
+  border: 1px solid #1c3852;
+  border-radius: 16px;
+  padding: 38px 32px;
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(0, 168, 255, 0.08);
+  box-sizing: border-box;
+}
+
+.loginHeader {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.loginIconWrapper {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: rgba(0, 168, 255, 0.12);
+  border: 1px solid rgba(0, 168, 255, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  color: #00a8ff;
+}
+
+.loginHeader h2 {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #f4f7fb;
+  letter-spacing: -0.01em;
+}
+
+.loginSubtitle {
+  margin: 0;
+  font-size: 13px;
+  color: #8da2b5;
+}
+
+.loginForm {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.loginForm .formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  text-align: left;
+}
+
+.loginForm .formGroup label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #c0d1e3;
+  letter-spacing: 0.01em;
+}
+
+.loginForm .inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.loginForm .inputWrapper .fieldIcon {
+  position: absolute;
+  left: 14px;
+  color: #5d758d;
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.loginForm .inputWrapper input {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  background: #081321;
+  border: 1px solid #1a334b;
+  border-radius: 10px;
+  color: #f4f7fb;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.loginForm .inputWrapper input::placeholder {
+  color: #4f677d;
+}
+
+.loginForm .inputWrapper input:focus {
+  border-color: #00a8ff;
+  background: #0b192b;
+  box-shadow: 0 0 0 3px rgba(0, 168, 255, 0.16);
+}
+
+.loginForm .inputWrapper:focus-within .fieldIcon {
+  color: #00a8ff;
+}
+
+.loginBtn {
+  width: 100%;
+  padding: 13px;
+  margin-top: 6px;
+  background: linear-gradient(135deg, #008cd4, #00a8ff);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 168, 255, 0.35);
+  box-sizing: border-box;
+}
+
+.loginBtn:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 6px 20px rgba(0, 168, 255, 0.45);
+}
+
+.loginBtn:active {
+  transform: scale(0.98);
+}
+
+
 

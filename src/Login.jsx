@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { Activity, Lock, Mail } from "lucide-react"
 
 export default function Login() {
   const navigate = useNavigate()
@@ -20,40 +21,59 @@ export default function Login() {
     localStorage.setItem("loggedIn", "1")
     localStorage.setItem("user", "Clinician")
 
-    navigate("/groups")
+    navigate("/dashboard")
   }
 
   return (
     <div className="loginPage">
       <div className="loginCard">
-        <h2>Login</h2>
+        <div className="loginHeader">
+          <div className="loginIconWrapper">
+            <Activity className="loginIcon" size={28} />
+          </div>
+          <h2>Anesthesia Workstation</h2>
+          <p className="loginSubtitle">Clinical Telemetry & Monitoring System</p>
+        </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="loginForm">
           <div className="formGroup">
-            <label>Email</label>
-            <input
-              type="email"
-              placeholder="Enter email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+            <label htmlFor="login-email">Email</label>
+            <div className="inputWrapper">
+              <Mail className="fieldIcon" size={18} />
+              <input
+                id="login-email"
+                type="email"
+                placeholder="Enter email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                required
+              />
+            </div>
           </div>
 
           <div className="formGroup">
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="Enter password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <label htmlFor="login-password">Password</label>
+            <div className="inputWrapper">
+              <Lock className="fieldIcon" size={18} />
+              <input
+                id="login-password"
+                type="password"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
+            </div>
           </div>
 
           <button type="submit" className="loginBtn">
-            Login
+            Sign In
           </button>
         </form>
       </div>
     </div>
   )
 }
+
