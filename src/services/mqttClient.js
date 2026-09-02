@@ -143,6 +143,19 @@ export async function connectMQTT(onMessage) {
             parsed
           )
 
+          // ---------------------------------
+          // PING FILTER
+          // ---------------------------------
+
+          if (
+            parsed?.ventilator?.mode === "PING"
+          ) {
+            console.log(
+              "MQTT PING packet blocked"
+            )
+            return
+          }
+
           // Push live telemetry to React
           onMessage(parsed)
 

@@ -237,6 +237,25 @@ useEffect(() => {
       incomingData
     )
 
+    // ---------------------------------
+    // PING FILTER
+    // ---------------------------------
+
+    if (
+      incomingData?.ventilator?.mode === "PING"
+    ) {
+      console.log(
+        "useLiveTelemetry: PING packet blocked"
+      )
+      return
+    }
+
+    console.log(
+      "MODE RECEIVED:",
+      incomingData?.ventilator?.mode,
+      incomingData?.metrics?.["ventilator.mode"]
+    )
+
     console.log(
       "MODE RECEIVED:",
       incomingData?.ventilator?.mode,
@@ -440,18 +459,12 @@ console.log(
 
     return () => {
 
-      store.listeners.delete(
-        onChange
-      )
+      store.listeners.delete(onChange)
 
       if (
         store.listeners.size === 0
       ) {
-        stopPolling(
-          deviceBackendId
-        )
-
-        disconnectWebSocket()
+        stopPolling(deviceBackendId)
       }
     }
 
